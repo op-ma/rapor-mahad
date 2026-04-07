@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Rapor 4.0</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4CAF50">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <style>
+        /* --- FONT & TYPOGRAPHY --- */
+        @font-face { font-family: 'ae_almohanad'; src: local('ae_almohanad'), local('Almohanad'); }
+        body { font-family: "Arial Narrow", Arial, sans-serif; margin: 0; padding: 20px; background-color: #f9f9f9; }
+        
+        .latin { font-family: "Arial Narrow", Arial, sans-serif !important; }
+        .arab { font-family: 'ae_almohanad', "Traditional Arabic", "Arial Narrow", Arial, sans-serif !important; font-size: 1.1em; }
+        
+        [dir="rtl"] { font-family: 'ae_almohanad', "Traditional Arabic", "Arial Narrow", Arial, sans-serif; }
+        [dir="rtl"] .latin { font-family: "Arial Narrow", Arial, sans-serif !important; font-size: 0.9em; }
+
+        /* --- NAVIGASI --- */
+        nav.no-print { margin-bottom: 20px; background: #ffffff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; gap: 10px; flex-wrap: wrap; }
+        nav button { padding: 10px 15px; cursor: pointer; background: #4CAF50; color: white; border: none; border-radius: 4px; font-weight: bold; font-family: "Arial Narrow", Arial, sans-serif;}
+        nav button:hover { background: #45a049; }
+        nav button.btn-cetak { background: #008CBA; }
+        nav button.active-btn { background: #333; box-shadow: inset 0 3px 5px rgba(0,0,0,0.2); }
+
+        /* --- LAYOUT TAB & FORM --- */
+        .tab-content { display: none; background: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; font-family: "Arial Narrow", Arial, sans-serif; }
+        .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: "Arial Narrow", Arial, sans-serif; }
+        .form-group input.arab, .form-group select.arab { font-family: 'ae_almohanad', "Arial Narrow", Arial, serif !important; }
+        
+        .btn-save { background: #ff9800; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-action { background: #2196F3; color: white; padding: 6px 10px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-danger { background: #f44336; color: white; padding: 6px 10px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-edit { background: #8bc34a; color: white; padding: 6px 10px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-excel { background: #107c41; color: white; padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-bottom: 10px; }
+        .btn-geser { background: #607d8b; color: white; padding: 4px 8px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; margin: 0 2px; }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+        .grid-2 > div { min-width: 0; } 
+
+        .upload-box { background: #e3f2fd; padding: 15px; border-radius: 5px; border: 1px dashed #2196F3; margin-bottom: 15px; }
+        
+        /* Table Rekap & Input Langsung */
+        .table-responsive { overflow-x: auto; margin-top: 15px; max-height: 600px; overflow-y: auto;}
+        table.data-table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        #tab-mapel table.data-table, #tab-siswa table.data-table { min-width: 100%; }
+        table.data-table th, table.data-table td { border: 1px solid #ddd; padding: 4px; text-align: center; }
+        table.data-table th { background: #f1f1f1; position: sticky; z-index: 10; font-size: 13px; font-family: "Arial Narrow", Arial, sans-serif; }
+
+        .input-tabel { width: 100%; border: none; background: transparent; text-align: center; font-size: 14px; font-weight: bold; padding: 5px 0; font-family: "Arial Narrow", Arial, sans-serif; }
+        .input-tabel:focus { background: #fffde7; outline: 1px solid #ff9800; }
+        .input-tabel::-webkit-inner-spin-button { display: none; }
+
+        /* --- FORMAT CETAK RAPOR --- */
+        .print-container { max-width: 800px; margin: 0 auto; background: white; color: black; direction: rtl; text-align: right; }
+        
+        .kop-surat { text-align: center; margin-bottom: 15px; }
+        .kop-surat h2, .kop-surat h3 { margin: 2px 0; font-weight: bold; }
+        
+        .tabel-identitas, .tabel-nilai, .tabel-absensi { width: 100%; border-collapse: collapse; margin-bottom: 10px; direction: rtl; }
+        .tabel-identitas td { padding: 2px 0; font-weight: bold; text-align: right; }
+        
+        .tabel-nilai th, .tabel-nilai td, .tabel-absensi th, .tabel-absensi td { border: 1px solid black; padding: 6px 6px; text-align: center; font-size: 15px; }
+        .tabel-nilai td.text-right { text-align: right !important; }
+        
+        .header-hijau { background-color: #92d050; }
+        .header-kuning { background-color: #ffc000; }
+        .huruf-merah { color: red !important; font-weight: bold; }
+
+        /* OPTIMASI 1 HALAMAN SAAT DICETAK (STRICT 1 PAGE FIT) */
+        @media print {
+            @page { size: A4; margin: 10mm; } 
+            body { background-color: white; padding: 0; margin: 0; width: 100%; }
+            .no-print { display: none !important; }
+            .tab-content { display: none !important; box-shadow: none; padding: 0; }
+            #tab-cetak { display: block !important; width: 100% !important; }
+            .header-hijau { -webkit-print-color-adjust: exact; background-color: #92d050 !important; }
+            .header-kuning { -webkit-print-color-adjust: exact; background-color: #ffc000 !important; }
+            .huruf-merah { -webkit-print-color-adjust: exact; color: red !important; }
+            
+            .print-container { max-width: none !important; width: 100% !important; margin: 0 !important; }
+            
+            .rapor-page { 
+                border-bottom: none; 
+                page-break-after: always !important; 
+                page-break-inside: avoid !important;
+                width: 100% !important;
+                height: 277mm !important; 
+                max-height: 277mm !important;
+                margin: 0 auto !important; 
+                padding: 0 !important; 
+                display: block !important; 
+                box-sizing: border-box;
+                overflow: hidden !important; 
+            }
+            
+            .rapor-body { display: block; }
+            .tabel-wrapper { display: block; } 
+            
+            .footer-rapor { margin-top: 15px !important; padding-top: 5px; } 
+            
+            .tabel-nilai th, .tabel-nilai td { padding: 3px 2px !important; font-size: 11.5px !important; line-height: 1.1; }
+            .tabel-identitas td { font-size: 12px !important; padding: 1px 0 !important; }
+            .kop-surat h2 { font-size: 14px !important; margin: 0 !important; }
+            .kop-surat h3 { font-size: 12px !important; margin: 0 !important; }
+            
+            .ttd-box { height: 45px !important; }
+            .footer-rapor table { font-size: 13px !important; }
+        }
+        .ttd-box { height: 60px; }
+
+        /* Modal Background */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 500px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body onload="initApp()">
+
+    <nav class="no-print">
+        <button id="btn-identitas" onclick="bukaTab('tab-identitas', this)">Identitas Madrasah</button>
+        <button id="btn-mapel" onclick="bukaTab('tab-mapel', this)">Mata Pelajaran</button>
+        <button id="btn-siswa" onclick="bukaTab('tab-siswa', this)">Data Siswa</button>
+        <button id="btn-nilai" onclick="bukaTab('tab-nilai', this)">Input & Rekap Nilai</button>
+        <button id="btn-cetak" onclick="bukaTab('tab-cetak', this)" class="btn-cetak">🖨️ Cetak Rapor</button>
+    </nav>
+
+    <div id="modal-catatan" class="modal-overlay no-print">
+        <div class="modal-content">
+            <h3 class="latin" style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:10px;">📝 Catatan Wali Kelas</h3>
+            <p class="latin" id="nama_siswa_catatan" style="font-weight:bold; color:#008CBA; margin-bottom:15px;"></p>
+            <input type="hidden" id="nisn_catatan">
+            <textarea id="teks_catatan" class="latin" style="width:100%; height:150px; padding:10px; border:1px solid #ccc; border-radius:4px; resize:vertical; box-sizing:border-box;" placeholder="Ketik catatan di sini..."></textarea>
+            <div style="text-align:right; margin-top:15px;">
+                <button class="btn-danger latin" onclick="tutupModalCatatan()">Batal</button>
+                <button class="btn-save latin" onclick="simpanCatatanModal()">💾 Simpan Catatan</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="tab-identitas" class="tab-content" style="display: block;">
+        <h2 class="latin">Identitas Madrasah</h2>
+        <div class="grid-2 latin">
+            <div>
+                <div class="form-group"><label>Nama Madrasah</label><input type="text" id="id_madrasah" placeholder="Contoh: Aliyah Al-Ma'tuq"></div>
+                <div class="form-group"><label>Kelas (Angka/Huruf)</label><input type="text" id="id_kelas" dir="rtl" class="arab" placeholder="الثالث -  أ"></div>
+                <div class="form-group"><label>Tingkat (Arab)</label>
+                    <select id="id_tingkat_arab" dir="rtl" class="arab"><option value="المتوسطة">المتوسطة</option><option value="الثانوية">الثانوية</option></select>
+                </div>
+                <div class="form-group" style="margin-top:20px; border-top:1px dashed #ccc; padding-top:15px;">
+                    <label>Kepala Madrasah</label><input type="text" id="id_kepala" dir="rtl" class="arab" placeholder="tulis dalam bahasa arab">
+                </div>
+            </div>
+            <div>
+                <div class="form-group"><label>Tahun Pelajaran</label><input type="text" id="id_tapel" placeholder="Contoh: 1446 - 1447 H / 2025 - 2026 M"></div>
+                <div class="grid-2" style="gap:10px;">
+                    <div class="form-group" style="margin:0;"><label>Semester (Arab)</i></label>
+					<select id="id_semester_arab" dir="rtl" class="arab"><option value="الأول">الأول</option><option value="الثاني">الثاني</option></select></div>
+                    <div class="form-group" style="margin:0;"><label>Semester (Latin)</label>
+					<select id="id_semester_latin" ><option value="Ganjil (I)">Ganjil (I)</option><option value="Genap (II)">Genap (II)</option></select>
+					</div>
+                </div>
+                
+                <div class="form-group"><label>Tempat Rapor (Kota)</label><input type="text" id="id_tempat" placeholder="Contoh: Sukabumi"></div>
+                <div class="grid-2" style="gap:10px;">
+                    <div class="form-group" style="margin:0;"><label>Tgl Hijriyah</label><input type="text" id="id_tgl_hijriyah" placeholder="Contoh: 01 Syawal 1447 H"></div>
+                    <div class="form-group" style="margin:0;"><label>Tgl Masehi</label><input type="text" id="id_tgl_masehi" placeholder="Contoh: 01 April 2026 M"></div>
+                </div>
+                
+                <div class="grid-2" style="gap:10px; margin-top:20px; border-top:1px dashed #ccc; padding-top:15px;">
+                    <div class="form-group" style="margin:0;"><label>Wali Kelas</label><input type="text" id="id_wali" dir="rtl" class="arab" placeholder="tulis dalam bahasa arab"></div>
+                    <div class="form-group" style="margin:0;"><label>Jk Wali Kelas</label>
+                        <select id="id_jk_wali"><option value="L">Laki-laki (L)</option><option value="P">Perempuan (P)</option></select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button class="btn-save latin" onclick="simpanIdentitas()" style="margin-top:15px;">💾 Simpan Identitas</button>
+    </div>
+
+    <div id="tab-mapel" class="tab-content latin">
+        <h2>Kelola Mata Pelajaran</h2>
+        <div class="grid-2">
+            <div style="background:#e3f2fd; padding:15px; border-radius:5px;">
+                <h3>Mapel Akademik</h3>
+                <div style="background:white; padding:10px; border-radius:4px; border:1px solid #bbdefb; margin-bottom:10px;">
+                    <p class="latin" style="margin:0 0 5px 0; font-size:12px;">Import Mapel (Header Excel: <b>Latin, Arab</b>)</p>
+                    <input type="file" id="excel_mapel_akademik" accept=".xlsx, .xls" style="font-size:12px;" />
+                    <button class="btn-action" style="padding:4px 8px; font-size:12px; margin-top:5px;" onclick="importExcelMapel('akademik')">📥 Import</button>
+                </div>
+                <div class="form-group"><input type="text" id="m_ak_latin" placeholder="Nama Mapel (Latin)"></div>
+                <div class="form-group"><input type="text" id="m_ak_arab" placeholder="Nama Mapel (Arab)" dir="rtl" class="arab"></div>
+                <button class="btn-action" onclick="tambahMapel('akademik')">➕ Tambah Manual</button>
+                <div class="table-responsive"><table class="data-table"><thead><tr><th>No</th><th>Latin</th><th>Arab</th><th>Aksi</th></tr></thead><tbody id="tbl_mapel_akademik"></tbody></table></div>
+            </div>
+            
+            <div style="background:#fff3e0; padding:15px; border-radius:5px;">
+                <h3>Mapel Praktik Dinamis</h3>
+                
+                <div style="background:#fff9c4; padding:10px; margin-bottom:15px; border-radius:4px; border:1px solid #fbc02d;">
+                    <h4 style="margin-top:0;">1. Buat Kategori Induk Mapel Praktik</h4>
+                    <div class="grid-2" style="gap:10px;">
+                        <input type="text" id="kat_pr_latin" placeholder="Kategori (Latin) Cth: Praktik Ibadah" style="width:100%; padding:6px; font-size:13px; border:1px solid #ccc;">
+                        <input type="text" id="kat_pr_arab" placeholder="Kategori (Arab)" class="arab" dir="rtl" style="width:100%; padding:6px; border:1px solid #ccc;">
+                    </div>
+                    <button class="btn-action" style="margin-top:10px; font-size:12px; background:#f57f17;" onclick="tambahKategoriPraktik()">➕ Tambah Kategori</button>
+                    <div id="list_kategori_praktik" style="margin-top:10px; font-size:13px; max-height:100px; overflow-y:auto; background:white; padding:5px; border:1px solid #ddd;"></div>
+                </div>
+
+                <div style="background:white; padding:10px; border-radius:4px; border:1px solid #ffe0b2; margin-bottom:10px;">
+                    <p class="latin" style="margin:0 0 5px 0; font-size:12px;">Import Sub-Mapel (Header Excel: <b>Latin, Arab</b>)</p>
+                    <input type="file" id="excel_mapel_praktik" accept=".xlsx, .xls" style="font-size:12px;" />
+                    <button class="btn-action" style="padding:4px 8px; font-size:12px; margin-top:5px; background:#ff9800;" onclick="importExcelMapel('praktik')">📥 Import</button>
+                </div>
+                
+                <h4 style="margin-bottom:5px;">2. Tambah Sub-Mapel Praktik</h4>
+                <div class="form-group" style="margin-bottom:10px;">
+                    <select id="m_pr_kategori" style="background-color: #fffde7; border-color: #fbc02d;"></select>
+                </div>
+                <div class="form-group"><input type="text" id="m_pr_latin" placeholder="Nama Sub-Mapel (Latin)"></div>
+                <div class="form-group"><input type="text" id="m_pr_arab" placeholder="Nama Sub-Mapel (Arab)" dir="rtl" class="arab"></div>
+                <button class="btn-action" style="background:#ff9800" onclick="tambahMapel('praktik')">➕ Tambah Sub-Mapel</button>
+                
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead><tr><th>No</th><th>Kategori</th><th>Latin</th><th>Arab</th><th>Aksi</th></tr></thead>
+                        <tbody id="tbl_mapel_praktik"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="tab-siswa" class="tab-content latin">
+        <h2>Kelola Data Siswa</h2>
+        <div class="grid-2">
+            <div style="background:#e8f5e9; padding:15px; border-radius:5px;">
+                <h3>Form Manual / Edit</h3>
+                <input type="hidden" id="s_id_edit" value="">
+                <div class="grid-2" style="gap:10px; margin-bottom:15px;">
+                    <div class="form-group" style="margin:0;"><label>NISN</label><input type="text" id="s_nisn"></div>
+                    <div class="form-group" style="margin:0;"><label>NISM</label><input type="text" id="s_nism"></div>
+                </div>
+                <div class="form-group"><label>Nama (Latin)</label><input type="text" id="s_nama"></div>
+                <div class="form-group"><label>Nama (Arab)</label><input type="text" id="s_arab" dir="rtl" class="arab"></div>
+                <div class="form-group"><label>Jenis Kelamin</label>
+                    <select id="s_jk"><option value="L">Laki-laki (L)</option><option value="P">Perempuan (P)</option></select>
+                </div>
+                <button class="btn-action" id="btn_simpan_siswa" onclick="simpanSiswa()">➕ Simpan Siswa</button>
+                <button class="btn-danger" style="display:none;" id="btn_batal_edit" onclick="batalEditSiswa()">Batal</button>
+            </div>
+            <div style="background:#f1f1f1; padding:15px; border-radius:5px;">
+                <h3>Import dari Excel</h3>
+                <p class="latin" style="font-size:14px;">Header wajib: <b>NISN, NISM, Nama, Arab, JK</b> <br><small>*(Isi kolom JK dengan huruf L atau P)*</small></p>
+                <input type="file" id="excel_siswa" accept=".xlsx, .xls" style="margin-bottom:10px; width:100%;" />
+                <button class="btn-save" onclick="importExcelSiswa()">📥 Import Siswa</button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead><tr><th>NISN</th><th>NISM</th><th>Nama Latin</th><th>Nama Arab</th><th>L/P</th><th>Aksi (Urutkan)</th></tr></thead>
+                <tbody id="tbl_siswa"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="tab-nilai" class="tab-content latin">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h2>Input & Rekapitulasi Nilai</h2>
+            <div class="latin" style="background:#fff9c4; padding:5px 10px; border-radius:4px; font-size:13px; font-weight:bold; border:1px solid #fbc02d;">
+                💡 Klik sel pada tabel di bawah untuk mengetik / mengubah nilai secara langsung.
+            </div>
+        </div>
+        <div style="margin-bottom:15px;">
+            <button class="btn-action active-btn" id="btn-tab-akademik" onclick="switchRekap('akademik')">Rekap Akademik</button>
+            <button class="btn-action" id="btn-tab-praktik" onclick="switchRekap('praktik')">Rekap Praktik</button>
+        </div>
+
+        <div id="area-akademik" style="display: block;">
+            <div class="grid-2">
+                <div class="upload-box">
+                    <h3>A. Import Excel Sekaligus</h3>
+                    <button class="btn-excel" onclick="downloadTemplate('akademik')">📥 Download Template Excel Akademik</button>
+                    <input type="file" id="excel_rekap_akademik" accept=".xlsx, .xls" style="width:100%; margin-bottom:5px;" />
+                    <button class="btn-save" style="width:100%;" onclick="importRekap('akademik')">Upload File Excel Akademik</button>
+                </div>
+                <div class="upload-box" style="border-color:#ff9800; background:#fff3e0;">
+                    <h3>B. Import Per-Mata Pelajaran</h3>
+                    <select id="sel_mapel_akademik" style="margin-bottom:10px; width:100%; padding:8px;"></select>
+                    <button class="btn-excel" style="background:#ff9800; padding:6px 10px; font-size:12px;" onclick="downloadTemplatePerMapel()">📥 Template Per-Mapel</button>
+                    <input type="file" id="excel_permapel_akademik" accept=".xlsx, .xls" style="width:100%; margin-bottom:5px; margin-top:5px;"/>
+                    <button class="btn-save" style="width:100%; background:#ff9800;" onclick="importPerMapel('akademik')">Upload Nilai Mapel</button>
+                </div>
+            </div>
+            
+            <button class="btn-danger" onclick="hapusSemuaNilai('akademik')" style="float:right;">Hapus Semua Nilai Akademik</button>
+            <div style="clear:both;"></div>
+            
+            <div class="table-responsive">
+                <table class="data-table"><thead id="th_akademik"></thead><tbody id="tb_akademik"></tbody></table>
+            </div>
+        </div>
+
+        <div id="area-praktik" style="display: none;">
+            <div class="grid-2">
+                <div class="upload-box">
+                    <h3>A. Import Excel Sekaligus</h3>
+                    <button class="btn-excel" onclick="downloadTemplate('praktik')">📥 Download Template Excel Praktik</button>
+                    <input type="file" id="excel_rekap_praktik" accept=".xlsx, .xls" style="width:100%; margin-bottom:5px;" />
+                    <button class="btn-save" style="width:100%;" onclick="importRekap('praktik')">Upload File Excel Praktik</button>
+                </div>
+                <div class="upload-box" style="border-color:#ff9800; background:#fff3e0;">
+                    <h3>B. Import Per-Sub Mapel</h3>
+                    <select id="sel_mapel_praktik" style="margin-bottom:10px; width:100%; padding:8px;"></select>
+                    <button class="btn-excel" style="background:#ff9800; padding:6px 10px; font-size:12px;" onclick="downloadTemplatePerMapel()">📥 Template Per-Mapel</button>
+                    <input type="file" id="excel_permapel_praktik" accept=".xlsx, .xls" style="width:100%; margin-bottom:5px; margin-top:5px;"/>
+                    <button class="btn-save" style="width:100%; background:#ff9800;" onclick="importPerMapel('praktik')">Upload Nilai Mapel</button>
+                </div>
+            </div>
+
+            <button class="btn-danger" onclick="hapusSemuaNilai('praktik')" style="float:right;">Hapus Semua Nilai Praktik</button>
+            <div style="clear:both;"></div>
+
+            <div class="table-responsive">
+                <table class="data-table"><thead id="th_praktik"></thead><tbody id="tb_praktik"></tbody></table>
+            </div>
+        </div>
+    </div>
+
+    <div id="tab-cetak" class="tab-content latin">
+        <div class="no-print" style="margin-bottom: 20px; background:#e3f2fd; padding:15px; border-radius:5px;">
+            
+            <div class="grid-2" style="align-items: end; margin-bottom: 15px;">
+                <div>
+                    <label class="latin" style="font-weight:bold;">Preview Satu Siswa: </label>
+                    <select id="c_pilih_siswa" class="latin" style="width:100%; padding:8px; border-radius:4px;" onchange="previewRapor()"><option value="">-- Pilih Siswa --</option></select>
+                </div>
+                <div class="grid-2" style="gap:10px;">
+                    <div>
+                        <label class="latin" style="font-weight:bold;">Jenis Rapor: </label>
+                        <select id="c_jenis_rapor" class="latin" style="width:100%; padding:8px; border-radius:4px;" onchange="previewRapor()">
+                            <option value="akademik">Rapor Akademik</option>
+                            <option value="praktik">Rapor Praktik</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="latin" style="font-weight:bold;">Batas Peringkat (Cetak): </label>
+                        <input type="number" id="c_batas_peringkat" class="latin" value="10" min="1" style="width:100%; padding:8px; border-radius:4px; border: 1px solid #ccc; box-sizing: border-box;" onchange="previewRapor()">
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-2" style="align-items: center; padding-top:15px; border-top:1px solid #bbdefb;">
+                <div>
+                    <label class="latin" style="font-weight:bold; cursor:pointer;">
+                        <input type="checkbox" id="c_is_genap" onchange="toggleGenapOptions(); previewRapor();"> Tampilkan Kotak Keputusan Kenaikan Kelas (Semester Genap)
+                    </label>
+                    <div id="genap_options" style="display:none; margin-top:10px; gap:10px;" class="grid-2 latin">
+                        <div class="form-group" style="margin:0;"><label>Kelas Tujuan (Jika NAIK):</label><input type="text" id="c_kelas_naik" placeholder="Cth: 2 MA (Atau LULUS)" oninput="previewRapor()"></div>
+                        <div class="form-group" style="margin:0;"><label>Kelas Saat Ini (Jika TINGGAL):</label><input type="text" id="c_kelas_tinggal" placeholder="Cth: 1 MA" oninput="previewRapor()"></div>
+                    </div>
+                </div>
+                <div>
+                    <label class="latin" style="font-weight:bold;">Aksi Mode Cetak: </label>
+                    <div style="display: flex; gap: 5px;">
+                        <button id="btn_mode_ttd" class="btn-action active-btn" onclick="setModeCetak('ttd')" style="flex:1; padding:8px; background-color:#333; color:white; font-weight:bold; border-radius:4px; border:none; cursor:pointer;">Dengan TTD</button>
+                        <button id="btn_mode_pdf" class="btn-action" onclick="setModeCetak('pdf')" style="flex:1; padding:8px; background-color:#ccc; color:#333; font-weight:bold; border-radius:4px; border:none; cursor:pointer;">Tanpa TTD</button>
+                    </div>
+                    <input type="hidden" id="c_mode_cetak" value="ttd">
+                </div>
+            </div>
+
+            <div style="margin-top:20px; text-align:right; display:flex; gap:10px; justify-content:flex-end;">
+                <button onclick="previewRapor()" class="btn-action" style="padding:10px 20px;">🔍 Tampilkan Satu Siswa</button>
+                <button onclick="previewSemuaRapor()" style="background: #ff9800; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight:bold;">🔍 Tampilkan Semua Siswa</button>
+                <button onclick="cetakLayarOtomatis()" style="background: #008CBA; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight:bold;">🖨️ Cetak Layar Saat Ini</button>
+            </div>
+        </div>
+
+        <div id="print-area" class="print-container">
+            <div style="text-align:center; padding:50px; color:#666;" class="latin">Silakan pilih siswa atau klik "Tampilkan Semua Siswa" lalu Print</div>
+        </div>
+    </div>
+
+    <script>
+        let db = { 
+            identitas: {}, 
+            siswa: [], 
+            kategori_praktik: [],
+            mapel: { akademik: [], praktik: [] }, 
+            nilai: { akademik: {}, praktik: {} }, 
+            absensi: {} 
+        };
+
+        function initApp() {
+            let localData = localStorage.getItem('raporDB_v16');
+            if(localData) db = JSON.parse(localData);
+            
+            if(!db.nilai) db.nilai = { akademik: {}, praktik: {} };
+            if(!db.absensi) db.absensi = {};
+            if(!db.mapel) db.mapel = { akademik: [], praktik: [] };
+            
+            if(!db.kategori_praktik || db.kategori_praktik.length === 0) {
+                db.kategori_praktik = [
+                    {id: 'arab', latin: 'Ujian Bahasa Arab / Lisan', arab: 'اختبار اللغة العربية<br>الشفهي'},
+                    {id: 'inggris', latin: 'Ujian Bahasa Inggris / Lisan', arab: 'اختبار اللغة الإنجليزية<br>الشفهي'},
+                    {id: 'ibadah', latin: 'Do\'a dan Praktik Ibadah', arab: 'الأدعية وتطبيق العبادة'},
+                    {id: 'wajib', latin: 'Ekstrakurikuler Wajib', arab: 'الدروس الإضافية الإلزامية'},
+                    {id: 'pilihan', latin: 'Ekstrakurikuler / Pilihan', arab: 'الدروس الإضافية<br>الاختيارية'}
+                ];
+            }
+
+            renderKategoriPraktik();
+            loadIdentitasForm();
+            renderTabelSiswa();
+            renderMapel();
+            toggleGenapOptions();
+
+            let lastTab = localStorage.getItem('activeTab_v16');
+            if(lastTab) {
+                let btnId = lastTab.replace('tab-', 'btn-');
+                let btnEl = document.getElementById(btnId);
+                if(btnEl) bukaTab(lastTab, btnEl);
+            } else {
+                bukaTab('tab-identitas', document.getElementById('btn-identitas'));
+            }
+        }
+
+        // PWA SERVICE WORKER REGISTRATION
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                .then(registration => {
+                    console.log('ServiceWorker terdaftar dengan scope: ', registration.scope);
+                })
+                .catch(error => {
+                    console.log('ServiceWorker gagal terdaftar: ', error);
+                });
+            });
+        }
+
+        function saveData() {
+            localStorage.setItem('raporDB_v16', JSON.stringify(db));
+            updateDropdownSiswa();
+        }
+
+        function sortMapelPraktik() {
+            if(!db.mapel.praktik) return;
+            let sorted = [];
+            db.kategori_praktik.forEach(kat => {
+                let items = db.mapel.praktik.filter(m => (m.kategori || 'pilihan') === kat.id);
+                sorted.push(...items);
+            });
+            let unassigned = db.mapel.praktik.filter(m => !db.kategori_praktik.find(k => k.id === m.kategori));
+            sorted.push(...unassigned);
+            db.mapel.praktik = sorted;
+        }
+
+        function tambahKategoriPraktik() {
+            let latin = document.getElementById('kat_pr_latin').value;
+            let arab = document.getElementById('kat_pr_arab').value;
+            if(!latin) return alert("Nama kategori latin wajib diisi!");
+            
+            let idKat = "K" + new Date().getTime();
+            db.kategori_praktik.push({ id: idKat, latin: latin, arab: arab });
+            
+            document.getElementById('kat_pr_latin').value = "";
+            document.getElementById('kat_pr_arab').value = "";
+            saveData(); renderKategoriPraktik();
+        }
+        
+        function hapusKategoriPraktik(idKat) {
+            let adaMapel = db.mapel.praktik.find(m => m.kategori === idKat);
+            if(adaMapel) return alert("Kategori ini sedang digunakan oleh Sub-Mapel. Hapus/pindahkan sub-mapelnya terlebih dahulu.");
+            
+            if(confirm("Hapus kategori ini?")) {
+                db.kategori_praktik = db.kategori_praktik.filter(k => k.id !== idKat);
+                saveData(); renderKategoriPraktik();
+            }
+        }
+
+        function renderKategoriPraktik() {
+            let list = document.getElementById('list_kategori_praktik');
+            let select = document.getElementById('m_pr_kategori');
+            list.innerHTML = ""; select.innerHTML = "";
+            
+            db.kategori_praktik.forEach((k, idx) => {
+                list.innerHTML += `<div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding:3px 0;">
+                    <span>${idx+1}. ${k.latin} / <span class="arab">${k.arab}</span></span>
+                    <button class="btn-danger" style="padding:2px 5px; font-size:10px;" onclick="hapusKategoriPraktik('${k.id}')">X</button>
+                </div>`;
+                select.innerHTML += `<option value="${k.id}">${idx+1}. ${k.latin}</option>`;
+            });
+            renderMapel();
+        }
+
+        function cetakLayarOtomatis() {
+            let jenis = document.getElementById('c_jenis_rapor').value;
+            let nisn = document.getElementById('c_pilih_siswa').value;
+            let originalTitle = document.title;
+            
+            let txtJenis = jenis === 'akademik' ? 'Akademik' : 'Praktik';
+            let fileName = "Rapor " + txtJenis;
+
+            if (nisn) {
+                let siswa = db.siswa.find(s => s.nisn === nisn);
+                if (siswa) fileName += " - " + siswa.nama;
+            } else {
+                fileName += " - Semua Siswa";
+            }
+
+            document.title = fileName;
+            window.print();
+            document.title = originalTitle;
+        }
+
+        function setModeCetak(mode) {
+            document.getElementById('c_mode_cetak').value = mode;
+            if(mode === 'ttd') {
+                document.getElementById('btn_mode_ttd').style.backgroundColor = '#333';
+                document.getElementById('btn_mode_ttd').style.color = 'white';
+                document.getElementById('btn_mode_pdf').style.backgroundColor = '#ccc';
+                document.getElementById('btn_mode_pdf').style.color = '#333';
+            } else {
+                document.getElementById('btn_mode_pdf').style.backgroundColor = '#333';
+                document.getElementById('btn_mode_pdf').style.color = 'white';
+                document.getElementById('btn_mode_ttd').style.backgroundColor = '#ccc';
+                document.getElementById('btn_mode_ttd').style.color = '#333';
+            }
+            previewRapor();
+        }
+
+        function bukaTab(idTab, btn) {
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('active-btn'));
+            document.getElementById(idTab).style.display = 'block';
+            if(btn) btn.classList.add('active-btn');
+            
+            localStorage.setItem('activeTab_v16', idTab);
+
+            if(idTab === 'tab-nilai') { hitungDanRenderRekap('akademik'); hitungDanRenderRekap('praktik'); }
+        }
+
+        function toggleGenapOptions() {
+            let isChecked = document.getElementById('c_is_genap').checked;
+            document.getElementById('genap_options').style.display = isChecked ? 'grid' : 'none';
+        }
+
+        function toArabicNum(str) {
+            if(!str) return "";
+            return str.toString().replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
+        }
+
+        function isAlquran(m) {
+            let lat = (m.latin || "").toLowerCase();
+            let ar = (m.arab || "");
+            return lat.includes('quran') || lat.includes("qur'an") || lat.includes('qur an') || ar.includes('قرآن') || ar.includes('القرآن');
+        }
+
+        function loadIdentitasForm() {
+            let i = db.identitas;
+            if(!i.madrasah) return;
+            document.getElementById('id_madrasah').value = i.madrasah; document.getElementById('id_kelas').value = i.kelas;
+            document.getElementById('id_tingkat_arab').value = i.tingkat_arab; document.getElementById('id_tapel').value = i.tapel; 
+            document.getElementById('id_semester_arab').value = i.semester_arab || ''; 
+            document.getElementById('id_semester_latin').value = i.semester_latin || '';
+            document.getElementById('id_tempat').value = i.tempat || '';
+            document.getElementById('id_tgl_hijriyah').value = i.tgl_hijriyah || ''; document.getElementById('id_tgl_masehi').value = i.tgl_masehi || '';
+            document.getElementById('id_kepala').value = i.kepala || '';
+            document.getElementById('id_wali').value = i.wali || '';
+            document.getElementById('id_jk_wali').value = i.jk_wali || 'L';
+            document.getElementById('c_kelas_tinggal').value = i.kelas; 
+        }
+        function simpanIdentitas() {
+            db.identitas = {
+                madrasah: document.getElementById('id_madrasah').value, kelas: document.getElementById('id_kelas').value,
+                tingkat_arab: document.getElementById('id_tingkat_arab').value, tapel: document.getElementById('id_tapel').value, 
+                semester_arab: document.getElementById('id_semester_arab').value, semester_latin: document.getElementById('id_semester_latin').value, 
+                tempat: document.getElementById('id_tempat').value,
+                tgl_hijriyah: document.getElementById('id_tgl_hijriyah').value, tgl_masehi: document.getElementById('id_tgl_masehi').value,
+                kepala: document.getElementById('id_kepala').value, wali: document.getElementById('id_wali').value, jk_wali: document.getElementById('id_jk_wali').value
+            };
+            saveData(); alert("Identitas disimpan!");
+        }
+
+        function tambahMapel(jenis) {
+            let latin = document.getElementById(`m_${jenis.substring(0,2)}_latin`).value;
+            let arab = document.getElementById(`m_${jenis.substring(0,2)}_arab`).value;
+            if(!latin) return alert("Nama mapel latin wajib diisi!");
+            
+            let obj = { id: "M" + new Date().getTime(), latin: latin, arab: arab };
+            if(jenis === 'praktik') {
+                let katInput = document.getElementById('m_pr_kategori').value;
+                if(!katInput) return alert("Buat Kategori Induk terlebih dahulu!");
+                obj.kategori = katInput;
+            }
+            
+            db.mapel[jenis].push(obj);
+            if(jenis === 'praktik') sortMapelPraktik(); 
+            
+            saveData(); renderMapel();
+            document.getElementById(`m_${jenis.substring(0,2)}_latin`).value = "";
+            document.getElementById(`m_${jenis.substring(0,2)}_arab`).value = "";
+        }
+        function hapusMapel(jenis, idMapel) {
+            if(confirm("Hapus mapel ini?")) {
+                db.mapel[jenis] = db.mapel[jenis].filter(m => m.id !== idMapel);
+                saveData(); renderMapel();
+            }
+        }
+        function geserMapelAkademik(idx, arah) {
+            if (idx + arah < 0 || idx + arah >= db.mapel.akademik.length) return;
+            let temp = db.mapel.akademik[idx];
+            db.mapel.akademik[idx] = db.mapel.akademik[idx + arah];
+            db.mapel.akademik[idx + arah] = temp;
+            saveData(); renderMapel();
+        }
+        function updateKategoriSubMapel(id, katBaru) {
+            let m = db.mapel.praktik.find(x => x.id === id);
+            if(m) { m.kategori = katBaru; sortMapelPraktik(); saveData(); renderMapel(); }
+        }
+        function importExcelMapel(jenis) {
+            let file = document.getElementById('excel_mapel_' + jenis).files[0];
+            if(!file) return alert("Pilih file!");
+            let r = new FileReader();
+            r.onload = function(e) {
+                let data = new Uint8Array(e.target.result); let wb = XLSX.read(data, {type:'array'});
+                let json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval:""});
+                let defaultKatId = db.kategori_praktik.length > 0 ? db.kategori_praktik[0].id : '';
+
+                json.forEach((row, i) => {
+                    let latin = row['Latin'] || row['latin'] || '';
+                    let arab = row['Arab'] || row['arab'] || '';
+                    if(latin) {
+                        let obj = { id: "M"+new Date().getTime()+i, latin, arab };
+                        if(jenis === 'praktik') obj.kategori = defaultKatId;
+                        db.mapel[jenis].push(obj);
+                    }
+                });
+                if(jenis === 'praktik') sortMapelPraktik();
+                saveData(); renderMapel(); alert("Import Mapel Berhasil!");
+                document.getElementById('excel_mapel_' + jenis).value = "";
+            }; r.readAsArrayBuffer(file);
+        }
+        function renderMapel() {
+            let tbodyAk = document.getElementById(`tbl_mapel_akademik`);
+            let selAk = document.getElementById(`sel_mapel_akademik`);
+            tbodyAk.innerHTML = ""; selAk.innerHTML = "<option value=''>-- Pilih Mapel --</option>";
+            db.mapel.akademik.forEach((m, idx) => {
+                tbodyAk.innerHTML += `<tr>
+                    <td>${idx+1}</td>
+                    <td style="text-align:left;">${m.latin}</td>
+                    <td class="arab" dir="rtl">${m.arab}</td>
+                    <td style="white-space:nowrap;">
+                        <button class="btn-geser" onclick="geserMapelAkademik(${idx}, -1)" title="Pindah Atas">⬆️</button>
+                        <button class="btn-geser" onclick="geserMapelAkademik(${idx}, 1)" title="Pindah Bawah">⬇️</button>
+                        <button class="btn-danger" style="margin-left:5px;" onclick="hapusMapel('akademik','${m.id}')">X</button>
+                    </td>
+                </tr>`;
+                selAk.innerHTML += `<option value="${m.id}">${m.latin}</option>`;
+            });
+
+            let tbodyPr = document.getElementById(`tbl_mapel_praktik`);
+            let selPr = document.getElementById(`sel_mapel_praktik`);
+            tbodyPr.innerHTML = ""; selPr.innerHTML = "<option value=''>-- Pilih Mapel --</option>";
+            
+            let counter = 1;
+            db.kategori_praktik.forEach(kat => {
+                let items = db.mapel.praktik.filter(m => m.kategori === kat.id);
+                items.forEach(m => {
+                    let catSelect = `<select style="padding:4px; font-size:12px; width:100%; border:1px solid #ccc; border-radius:4px;" onchange="updateKategoriSubMapel('${m.id}', this.value)">`;
+                    db.kategori_praktik.forEach(k => { catSelect += `<option value="${k.id}" ${m.kategori===k.id?'selected':''}>${k.latin}</option>`; });
+                    catSelect += `</select>`;
+                    
+                    tbodyPr.innerHTML += `<tr>
+                        <td>${counter++}</td><td>${catSelect}</td><td style="text-align:left;">${m.latin}</td><td class="arab" dir="rtl">${m.arab}</td>
+                        <td><button class="btn-danger" onclick="hapusMapel('praktik','${m.id}')">X</button></td>
+                    </tr>`;
+                    selPr.innerHTML += `<option value="${m.id}">[${kat.latin}] ${m.latin}</option>`;
+                });
+            });
+
+            let unassignedItems = db.mapel.praktik.filter(m => !db.kategori_praktik.find(k => k.id === m.kategori));
+            unassignedItems.forEach(m => {
+                    let catSelect = `<select style="padding:4px; font-size:12px; width:100%; border:1px solid #ccc; border-radius:4px;" onchange="updateKategoriSubMapel('${m.id}', this.value)">
+                    <option value="">- Belum Ditentukan -</option>`;
+                    db.kategori_praktik.forEach(k => { catSelect += `<option value="${k.id}">${k.latin}</option>`; });
+                    catSelect += `</select>`;
+                    
+                    tbodyPr.innerHTML += `<tr style="background:#ffebee;">
+                        <td>${counter++}</td><td>${catSelect}</td><td style="text-align:left;">${m.latin}</td><td class="arab" dir="rtl">${m.arab}</td>
+                        <td><button class="btn-danger" onclick="hapusMapel('praktik','${m.id}')">X</button></td>
+                    </tr>`;
+                    selPr.innerHTML += `<option value="${m.id}">[Unassigned] ${m.latin}</option>`;
+            });
+            hitungDanRenderRekap('akademik'); hitungDanRenderRekap('praktik');
+        }
+
+        function simpanSiswa() {
+            let idEdit = document.getElementById('s_id_edit').value;
+            let nisn = document.getElementById('s_nisn').value; let nism = document.getElementById('s_nism').value;
+            let nama = document.getElementById('s_nama').value; let arab = document.getElementById('s_arab').value;
+            let jk = document.getElementById('s_jk').value;
+            
+            if(!nisn || !nama) return alert("NISN dan Nama wajib diisi!");
+            if(idEdit) {
+                let idx = db.siswa.findIndex(s => s.nisn === idEdit);
+                if(idx > -1) db.siswa[idx] = { nisn, nism, nama, arab, jk };
+            } else {
+                if(db.siswa.find(s => s.nisn === nisn)) return alert("NISN sudah ada!");
+                db.siswa.push({ nisn, nism, nama, arab, jk });
+            }
+            batalEditSiswa(); saveData(); renderTabelSiswa();
+        }
+        function editSiswa(nisn) {
+            let s = db.siswa.find(x => x.nisn === nisn);
+            if(!s) return;
+            document.getElementById('s_id_edit').value = s.nisn; document.getElementById('s_nisn').value = s.nisn;
+            document.getElementById('s_nism').value = s.nism; document.getElementById('s_nama').value = s.nama;
+            document.getElementById('s_arab').value = s.arab;
+            document.getElementById('s_jk').value = s.jk || 'L';
+            document.getElementById('btn_simpan_siswa').innerText = "💾 Update";
+            document.getElementById('btn_batal_edit').style.display = "inline-block";
+        }
+        function batalEditSiswa() {
+            ['s_id_edit','s_nisn','s_nism','s_nama','s_arab'].forEach(id => document.getElementById(id).value = "");
+            document.getElementById('s_jk').value = "L";
+            document.getElementById('btn_simpan_siswa').innerText = "➕ Simpan Siswa";
+            document.getElementById('btn_batal_edit').style.display = "none";
+        }
+        function hapusSiswa(nisn) {
+            if(confirm("Hapus siswa?")) { db.siswa = db.siswa.filter(s => s.nisn !== nisn); saveData(); renderTabelSiswa(); }
+        }
+        function geserSiswa(idx, arah) {
+            if (idx + arah < 0 || idx + arah >= db.siswa.length) return;
+            let temp = db.siswa[idx];
+            db.siswa[idx] = db.siswa[idx + arah];
+            db.siswa[idx + arah] = temp;
+            saveData(); renderTabelSiswa();
+        }
+        function renderTabelSiswa() {
+            let tbody = document.getElementById('tbl_siswa'); tbody.innerHTML = "";
+            db.siswa.forEach((s, idx) => {
+                tbody.innerHTML += `<tr><td>${s.nisn}</td><td>${s.nism || '-'}</td><td style="text-align:left;">${s.nama}</td>
+                <td class="arab" dir="rtl" style="text-align:right;">${s.arab || '-'}</td><td>${s.jk||'L'}</td>
+                <td style="white-space:nowrap;">
+                    <button class="btn-geser" onclick="geserSiswa(${idx}, -1)" title="Pindah Atas">⬆️</button>
+                    <button class="btn-geser" onclick="geserSiswa(${idx}, 1)" title="Pindah Bawah">⬇️</button>
+                    <button class="btn-edit" style="margin-left:5px;" onclick="editSiswa('${s.nisn}')">Edit</button> 
+                    <button class="btn-danger" onclick="hapusSiswa('${s.nisn}')">Hapus</button>
+                </td></tr>`;
+            });
+            updateDropdownSiswa();
+        }
+        function updateDropdownSiswa() {
+            let html = '<option value="">-- Pilih Siswa --</option>';
+            db.siswa.forEach(s => html += `<option value="${s.nisn}">${s.nama} (${s.nisn})</option>`);
+            document.getElementById('c_pilih_siswa').innerHTML = html;
+        }
+        function importExcelSiswa() {
+            let file = document.getElementById('excel_siswa').files[0];
+            if(!file) return alert("Pilih file!");
+            let r = new FileReader();
+            r.onload = function(e) {
+                let data = new Uint8Array(e.target.result); let wb = XLSX.read(data, {type:'array'});
+                let json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval:""});
+                let added = 0;
+                json.forEach(row => {
+                    let nisn = (row['NISN'] || row['nisn'] || '').toString().trim();
+                    if(nisn) {
+                        let nism = row['NISM']||row['nism']||''; let nama = row['Nama']||row['nama']||'';
+                        let arab = row['Arab']||row['arab']||''; let jkRaw = (row['JK']||row['jk']||'L').toString().toUpperCase();
+                        let jk = jkRaw === 'P' ? 'P' : 'L';
+                        
+                        let ex = db.siswa.find(s => s.nisn === nisn);
+                        if(ex) { ex.nism = nism; ex.nama = nama; ex.arab = arab; ex.jk = jk; }
+                        else { db.siswa.push({ nisn, nism, nama, arab, jk }); added++; }
+                    }
+                });
+                saveData(); renderTabelSiswa(); alert("Import Berhasil! (" + added + " baru ditambahkan)");
+            }; r.readAsArrayBuffer(file);
+        }
+
+        function switchRekap(jenis) {
+            document.getElementById('area-akademik').style.display = jenis === 'akademik' ? 'block' : 'none';
+            document.getElementById('area-praktik').style.display = jenis === 'praktik' ? 'block' : 'none';
+            document.getElementById('btn-tab-akademik').style.background = jenis === 'akademik' ? '#333' : '#2196F3';
+            document.getElementById('btn-tab-praktik').style.background = jenis === 'praktik' ? '#333' : '#2196F3';
+        }
+
+        function updateNilaiLangsung(nisn, mapelId, jenis, el) {
+            if(!db.nilai[jenis][nisn]) db.nilai[jenis][nisn] = {};
+            let val = el.value;
+            db.nilai[jenis][nisn][mapelId] = val === '' ? '' : parseFloat(val);
+            saveData();
+            
+            if(val !== '' && parseFloat(val) < 65) { el.style.color = "red"; el.style.fontWeight = "bold"; }
+            else { el.style.color = "black"; el.style.fontWeight = "bold"; }
+        }
+
+        function updateAbsensiLangsung(nisn, key, el) {
+            if(!db.absensi[nisn]) db.absensi[nisn] = {sakit:0,izin:0,alfa:0,sikap:'B',catatan:'', naik:true};
+            let val = el.type === 'checkbox' ? el.checked : el.value;
+            if(key === 'sikap') val = val.toUpperCase();
+            db.absensi[nisn][key] = val;
+            saveData();
+            
+            if(key === 'naik' || key === 'alfa') hitungDanRenderRekap('akademik');
+        }
+
+        function toggleSemuaNaik(isChecked) {
+            db.siswa.forEach(s => {
+                if(!db.absensi[s.nisn]) db.absensi[s.nisn] = {sakit:0, izin:0, alfa:0, sikap:'B', catatan:'', naik: isChecked};
+                else db.absensi[s.nisn].naik = isChecked;
+            });
+            saveData(); hitungDanRenderRekap('akademik');
+        }
+
+        window.editCatatan = function(nisn) {
+            let s = db.siswa.find(x => x.nisn === nisn);
+            let a = db.absensi[nisn] || {};
+            
+            document.getElementById('nisn_catatan').value = nisn;
+            document.getElementById('nama_siswa_catatan').innerText = "Santri: " + s.nama;
+            document.getElementById('teks_catatan').value = a.catatan || "";
+            
+            document.getElementById('modal-catatan').style.display = 'flex';
+        }
+
+        window.tutupModalCatatan = function() {
+            document.getElementById('modal-catatan').style.display = 'none';
+        }
+
+        window.simpanCatatanModal = function() {
+            let nisn = document.getElementById('nisn_catatan').value;
+            let catatanBaru = document.getElementById('teks_catatan').value;
+            
+            if(!db.absensi[nisn]) db.absensi[nisn] = {sakit:0,izin:0,alfa:0,sikap:'B',catatan:'', naik:true};
+            db.absensi[nisn].catatan = catatanBaru;
+            
+            saveData(); 
+            hitungDanRenderRekap('akademik');
+            tutupModalCatatan();
+        }
+
+        function downloadTemplatePerMapel() {
+            let header = ['NISN', 'Nama', 'Nilai'];
+            let dataArr = [header];
+            db.siswa.forEach(s => {
+                dataArr.push([s.nisn, s.nama, '']);
+            });
+            let ws = XLSX.utils.aoa_to_sheet(dataArr);
+            let wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Input_Nilai");
+            XLSX.writeFile(wb, `Template_Input_Per_Mapel.xlsx`);
+        }
+
+        function downloadTemplate(jenis) {
+            let header = ['NISN', 'Nama'];
+            
+            if(jenis === 'akademik') {
+                db.mapel.akademik.forEach(m => header.push(`${m.latin} | ${m.arab}`));
+                header.push('Sakit', 'Izin', 'Alfa', 'Kepribadian', 'Catatan');
+            } else {
+                db.kategori_praktik.forEach(kat => {
+                    let items = db.mapel.praktik.filter(m => m.kategori === kat.id);
+                    items.forEach(m => { header.push(`[${kat.latin}] ${m.latin}`); });
+                });
+            }
+
+            let dataArr = [header];
+            db.siswa.forEach(s => {
+                let row = [s.nisn, s.nama];
+                if(jenis === 'akademik') {
+                    db.mapel.akademik.forEach(m => row.push(db.nilai.akademik[s.nisn] ? db.nilai.akademik[s.nisn][m.id] : ''));
+                    let a = db.absensi[s.nisn] || {};
+                    row.push(a.sakit||0, a.izin||0, a.alfa||0, a.sikap||'B', a.catatan||'');
+                } else {
+                    db.kategori_praktik.forEach(kat => {
+                        let items = db.mapel.praktik.filter(m => m.kategori === kat.id);
+                        items.forEach(m => row.push(db.nilai.praktik[s.nisn] ? db.nilai.praktik[s.nisn][m.id] : ''));
+                    });
+                }
+                dataArr.push(row);
+            });
+            
+            let ws = XLSX.utils.aoa_to_sheet(dataArr); let wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Nilai"); XLSX.writeFile(wb, `Template_${jenis}.xlsx`);
+        }
+
+        function importRekap(jenis) {
+            let file = document.getElementById('excel_rekap_' + jenis).files[0];
+            if(!file) return alert("Pilih file!");
+            let r = new FileReader();
+            r.onload = function(e) {
+                let data = new Uint8Array(e.target.result); let wb = XLSX.read(data, {type:'array'});
+                let json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval:""});
+                json.forEach(row => {
+                    let nisn = (row['NISN'] || row['nisn'] || '').toString().trim();
+                    if(!nisn) return;
+                    if(!db.nilai[jenis][nisn]) db.nilai[jenis][nisn] = {};
+                    
+                    if(jenis === 'akademik') {
+                        db.mapel.akademik.forEach(m => {
+                            let head = `${m.latin} | ${m.arab}`;
+                            let val = row[head] !== undefined ? row[head] : row[m.latin];
+                            db.nilai.akademik[nisn][m.id] = val === '' ? '' : parseFloat(val);
+                        });
+                        if(!db.absensi[nisn]) db.absensi[nisn] = {naik:true};
+                        db.absensi[nisn].sakit = row['Sakit']||0; db.absensi[nisn].izin = row['Izin']||0;
+                        db.absensi[nisn].alfa = row['Alfa']||0; db.absensi[nisn].sikap = (row['Kepribadian']||'B').toString().toUpperCase();
+                        db.absensi[nisn].catatan = row['Catatan']||'';
+                    } else {
+                        // Import Praktik
+                        db.mapel.praktik.forEach(m => {
+                            let katObj = db.kategori_praktik.find(k => k.id === m.kategori);
+                            let katLatin = katObj ? katObj.latin : '';
+                            let headFull = `[${katLatin}] ${m.latin}`;
+                            // Cek header format baru [Kategori] Mapel, atau format lama
+                            let val = row[headFull] !== undefined ? row[headFull] : (row[`${m.latin} | ${m.arab}`] !== undefined ? row[`${m.latin} | ${m.arab}`] : row[m.latin]);
+                            db.nilai.praktik[nisn][m.id] = val === '' ? '' : parseFloat(val);
+                        });
+                    }
+                });
+                saveData(); hitungDanRenderRekap(jenis); alert("Berhasil!");
+            }; r.readAsArrayBuffer(file);
+        }
+
+        function importPerMapel(jenis) {
+            let mapelId = document.getElementById(`sel_mapel_${jenis}`).value;
+            let file = document.getElementById(`excel_permapel_${jenis}`).files[0];
+            if(!mapelId || !file) return alert("Pilih mapel & file!");
+            let r = new FileReader();
+            r.onload = function(e) {
+                let data = new Uint8Array(e.target.result); let wb = XLSX.read(data, {type:'array'});
+                let json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval:""});
+                json.forEach(row => {
+                    let nisn = (row['NISN'] || row['nisn'] || '').toString().trim();
+                    let n = row['Nilai'] || row['nilai'];
+                    if(nisn && n !== undefined) {
+                        if(!db.nilai[jenis][nisn]) db.nilai[jenis][nisn] = {};
+                        db.nilai[jenis][nisn][mapelId] = n === '' ? '' : parseFloat(n);
+                    }
+                });
+                saveData(); hitungDanRenderRekap(jenis); alert("Berhasil!");
+            }; r.readAsArrayBuffer(file);
+        }
+
+        function hapusSemuaNilai(jenis) { if(confirm("Hapus semua nilai?")) { db.nilai[jenis] = {}; saveData(); hitungDanRenderRekap(jenis); } }
+
+        function hitungDanRenderRekap(jenis) {
+            let thead = document.getElementById('th_' + jenis); let tbody = document.getElementById('tb_' + jenis);
+            
+            let mapels = jenis === 'akademik' ? db.mapel.akademik : db.mapel.praktik;
+            if(mapels.length === 0) { thead.innerHTML = ""; tbody.innerHTML = "<tr><td>Belum ada mapel.</td></tr>"; return; }
+
+            let allChecked = db.siswa.length > 0 && db.siswa.every(s => {
+                let a = db.absensi[s.nisn] || {}; return a.naik !== false;
+            });
+
+            let thHTML = "";
+            if (jenis === 'akademik') {
+                thHTML = `<tr><th style="top:0;">NISN</th><th style="top:0;">Nama</th>`;
+                thHTML += `<th style="top:0;">Naik?<br><input type="checkbox" ${allChecked?'checked':''} onclick="toggleSemuaNaik(this.checked)"></th>`;
+                mapels.forEach(m => thHTML += `<th style="top:0;">${m.latin}</th>`);
+                thHTML += `<th style="top:0;">Jml</th><th style="top:0;">Rata</th><th style="top:0;" class="arab">Predikat</th><th style="top:0;">Rank</th>`;
+                thHTML += `<th style="top:0;">S</th><th style="top:0;">I</th><th style="top:0;">A</th><th style="top:0;">Sikap</th><th style="top:0;">Catatan</th></tr>`;
+            } else {
+                let th1 = `<tr><th rowspan="2" style="top:0;">NISN</th><th rowspan="2" style="top:0; min-width:150px;">Nama</th>`;
+                let th2 = `<tr>`;
+                
+                db.kategori_praktik.forEach(kat => {
+                    let items = db.mapel.praktik.filter(m => m.kategori === kat.id);
+                    if(items.length > 0) {
+                        th1 += `<th colspan="${items.length}" style="top:0;">${kat.latin}</th>`;
+                        items.forEach(m => th2 += `<th style="top:30px; font-size:12px; font-weight:normal; background:#e3f2fd;">${m.latin}</th>`);
+                    }
+                });
+
+                let unassignedItems = db.mapel.praktik.filter(m => !db.kategori_praktik.find(k => k.id === m.kategori));
+                if(unassignedItems.length > 0) {
+                    th1 += `<th colspan="${unassignedItems.length}" style="top:0;">Unassigned</th>`;
+                    unassignedItems.forEach(m => th2 += `<th style="top:30px; font-size:12px; font-weight:normal; background:#ffebee;">${m.latin}</th>`);
+                }
+                
+                th1 += `<th rowspan="2" style="top:0;">Jml</th><th rowspan="2" style="top:0;">Rata</th><th rowspan="2" style="top:0;" class="arab">Predikat</th><th rowspan="2" style="top:0;">Rank</th></tr>`;
+                th2 += `</tr>`;
+                thHTML = th1 + th2;
+            }
+            thead.innerHTML = thHTML;
+
+            // Proses Kalkulasi
+            let mappedData = db.siswa.map(s => {
+                let v = db.nilai[jenis][s.nisn] || {};
+                let a = db.absensi[s.nisn] || {alfa:0, naik:true};
+                if(a.naik === undefined) a.naik = true; 
+                
+                let total = 0, count = 0, countKurang = 0; let quranFail = false;
+                
+                let orderedMapels = [];
+                if(jenis === 'akademik') { orderedMapels = db.mapel.akademik; }
+                else {
+                    db.kategori_praktik.forEach(kat => orderedMapels.push(...db.mapel.praktik.filter(m => m.kategori === kat.id)));
+                    orderedMapels.push(...db.mapel.praktik.filter(m => !db.kategori_praktik.find(k => k.id === m.kategori)));
+                }
+
+                orderedMapels.forEach(m => { 
+                    let rawVal = v[m.id];
+                    if(rawVal !== undefined && rawVal !== '') {
+                        let val = parseFloat(rawVal);
+                        if(!isNaN(val)) { 
+                            total += val; count++; 
+                            if(val < 65) { 
+                                countKurang++; if(isAlquran(m)) quranFail = true;
+                            }
+                        } 
+                    }
+                });
+                let rata = count > 0 ? (total/count).toFixed(2) : 0;
+                let alfaNum = parseInt(a.alfa); if(isNaN(alfaNum)) alfaNum = 0;
+
+                let pred = "ممتاز"; 
+                if (quranFail || countKurang > 3 || alfaNum > 3) {
+                    pred = "راسب"; 
+                } else {
+                    let rNum = parseFloat(rata);
+                    if (rNum < 65) pred = "راسب";
+                    else if (rNum < 70) pred = "مقبول";
+                    else if (rNum < 80) pred = "جيد";
+                    else if (rNum < 90) pred = "جيد جدا";
+                }
+                return { nisn: s.nisn, nama: s.nama, total, rata, pred, abs: a, val: v, orderedMapels: orderedMapels };
+            });
+
+            let rankSorted = [...mappedData].sort((a,b) => b.total - a.total);
+            rankSorted.forEach((item, idx) => { item.rankFull = idx + 1; });
+
+            mappedData.forEach(d => {
+                let rItem = rankSorted.find(x => x.nisn === d.nisn);
+                let myRank = rItem ? rItem.rankFull : '-';
+                d.rankDisplay = (myRank !== '-' && myRank <= 10) ? myRank : '-';
+                if(!db.nilai[jenis][d.nisn]) db.nilai[jenis][d.nisn] = {};
+                db.nilai[jenis][d.nisn].kalkulasi = { rankDisplay: d.rankDisplay, rankFull: myRank, total: d.total, rata: d.rata, predikat: d.pred };
+            });
+
+            let trHTML = "";
+            mappedData.forEach((d) => {
+                trHTML += `<tr><td class="latin">${d.nisn}</td><td class="latin" style="text-align:left; font-size:12px; min-width:150px;">${d.nama}</td>`;
+                if(jenis === 'akademik') trHTML += `<td><input type="checkbox" ${d.abs.naik !== false ? 'checked' : ''} onchange="updateAbsensiLangsung('${d.nisn}','naik',this)"></td>`;
+
+                d.orderedMapels.forEach(m => {
+                    let v = d.val[m.id]; let vHtml = v !== undefined ? v : '';
+                    let cMerah = (vHtml !== '' && parseFloat(vHtml) < 65) ? "color:red; font-weight:bold;" : "color:black; font-weight:bold;";
+                    trHTML += `<td><input type="number" class="input-tabel latin" style="${cMerah}" value="${vHtml}" oninput="updateNilaiLangsung('${d.nisn}','${m.id}','${jenis}',this)" onblur="hitungDanRenderRekap('${jenis}')"></td>`;
+                });
+                
+                let cPred = d.pred === 'راسب' ? 'color:red; font-weight:bold;' : '';
+                trHTML += `<td class="latin"><b>${d.total}</b></td><td class="latin"><b>${d.rata}</b></td><td class="arab" dir="rtl" style="${cPred}">${d.pred}</td><td class="latin"><b>${db.nilai[jenis][d.nisn].kalkulasi.rankFull}</b></td>`;
+                
+                if(jenis === 'akademik') {
+                    trHTML += `<td><input type="number" class="input-tabel latin" style="width:25px" value="${d.abs.sakit||0}" oninput="updateAbsensiLangsung('${d.nisn}','sakit',this)"></td>`;
+                    trHTML += `<td><input type="number" class="input-tabel latin" style="width:25px" value="${d.abs.izin||0}" oninput="updateAbsensiLangsung('${d.nisn}','izin',this)"></td>`;
+                    trHTML += `<td><input type="number" class="input-tabel latin" style="width:25px" value="${d.abs.alfa||0}" oninput="updateAbsensiLangsung('${d.nisn}','alfa',this)"></td>`;
+                    trHTML += `<td><input type="text" class="input-tabel latin" style="width:25px" value="${d.abs.sikap||'B'}" oninput="updateAbsensiLangsung('${d.nisn}','sikap',this)"></td>`;
+                    trHTML += `<td><button class="btn-action latin" style="padding:2px 5px; font-size:11px;" onclick="editCatatan('${d.nisn}')">📝 Catatan</button></td>`;
+                }
+                trHTML += `</tr>`;
+            });
+            tbody.innerHTML = trHTML;
+        }
+
+        // --- RAPOR LOGIC ---
+        function terbilangArabCore(num) {
+            if (num === 0) return "صفر";
+            const satuan = ["", "واحدة", "اثنتان", "ثلاث", "أربع", "خمس", "ست", "سبع", "ثمان", "تسع", "عشرة"];
+            const belasan = ["", "إحدى عشرة", "اثنتا عشرة", "ثلاث عشرة", "أربع عشرة", "خمس عشرة", "ست عشرة", "سبع عشرة", "ثمان عشرة", "تسع عشرة"];
+            const puluhan = ["", "عشر", "عشرون", "ثلاثون", "أربعون", "خمسون", "ستون", "سبعون", "ثمانون", "تسعون"];
+            const ratusan = ["", "مائة", "مائتان", "ثلاثمائة", "أربعمائة", "خمسمائة", "ستمائة", "سبعمائة", "ثمانمائة", "تسعمائة"];
+            const ribuan = ["", "ألف", "ألفان", "ثلاثة آلاف", "أربعة آلاف", "خمسة آلاف", "ستة آلاف", "سبعة آلاف", "ثمانية آلاف", "تسعة آلاف"];
+
+            let result = [];
+            let r = Math.floor(num / 1000); let sisaRibuan = num % 1000;
+            let h = Math.floor(sisaRibuan / 100); let sisaRatusan = sisaRibuan % 100;
+            let t = Math.floor(sisaRatusan / 10); let s = sisaRatusan % 10;
+
+            if (r > 0) result.push(ribuan[r]);
+            if (h > 0) result.push(ratusan[h]);
+
+            if (sisaRatusan > 0) {
+                if (sisaRatusan <= 10) result.push(satuan[sisaRatusan]);
+                else if (sisaRatusan > 10 && sisaRatusan < 20) result.push(belasan[sisaRatusan - 10]);
+                else {
+                    let puluhanStr = puluhan[t];
+                    let satuanStr = s > 0 ? (s === 1 ? "إحدى" : (s === 2 ? "اثنتان" : satuan[s])) : "";
+                    if (satuanStr !== "") result.push(satuanStr + " و" + puluhanStr); else result.push(puluhanStr);
+                }
+            }
+            return result.join(" و ");
+        }
+
+        function terbilangArab(numStr) {
+            if(isNaN(parseFloat(numStr))) return "-";
+            let parts = numStr.toString().replace(',', '.').split('.');
+            let intPart = parseInt(parts[0]) || 0; let result = terbilangArabCore(intPart);
+            if (parts.length > 1 && parts[1]) {
+                let decStr = parts[1].substring(0, 2); if (decStr.length === 1) decStr += "0"; 
+                let decPart = parseInt(decStr); if (decPart > 0) result += " فاصل " + terbilangArabCore(decPart);
+            }
+            return result;
+        }
+
+        function getRataKelas(jenis, mapelId) {
+            let total = 0; let count = 0;
+            db.siswa.forEach(s => {
+                if(db.nilai[jenis][s.nisn] && db.nilai[jenis][s.nisn][mapelId] !== undefined) {
+                    let rawV = db.nilai[jenis][s.nisn][mapelId];
+                    if(rawV !== '') { let v = parseFloat(rawV); if(!isNaN(v)) { total += v; count++; } }
+                }
+            });
+            return count > 0 ? (total / count).toFixed(2) : '-';
+        }
+
+        function generateHTMLRaporSatuSiswa(nisn, jenis, isGenap, kelasNaik, kelasTinggal, isCetakTTD, maxRank) {
+            let siswa = db.siswa.find(s => s.nisn === nisn);
+            if(!siswa) return "";
+            let n = db.nilai[jenis][nisn] || { kalkulasi: {} };
+            let abs = db.absensi[nisn] || {};
+            let idt = db.identitas;
+            
+            let barisTabel = ""; 
+            
+            if (jenis === 'akademik') {
+                let mapels = db.mapel.akademik || [];
+                let no = 1;
+                mapels.forEach(m => {
+                    let val = n[m.id] !== undefined && n[m.id] !== '' ? n[m.id] : '-';
+                    let huruf = val !== '-' ? terbilangArab(val) : '-';
+                    let isMerah = val !== '-' && parseFloat(val) < 65; let cMerah = isMerah ? "huruf-merah" : "";
+                    let rataKelas = getRataKelas(jenis, m.id);
+
+                    barisTabel += `
+                    <tr>
+                        <td class="arab">${toArabicNum(no)}</td>
+                        <td style="padding:0 !important; height:100%;">
+                            <table style="width:100%; height:100%; border:none; border-collapse:collapse; margin:0;">
+                                <tr>
+                                    <td class="arab" style="border:none; border-left:1px solid #000; width:50%; text-align:right; padding:6px 8px;">${m.arab}</td>
+                                    <td class="latin" style="border:none; width:50%; text-align:left; padding:6px 8px; font-size:13px; direction:ltr;">${m.latin}</td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td class="${cMerah} latin"><b>${val}</b></td>
+                        <td class="${cMerah} arab" style="text-align:right !important;">${huruf}</td>
+                        <td class="latin">${rataKelas}</td>
+                    </tr>`; no++;
+                });
+            } else {
+                let groupNo = 1;
+                db.kategori_praktik.forEach(kat => {
+                    let items = db.mapel.praktik.filter(m => m.kategori === kat.id);
+                    if(items.length > 0) {
+                        items.forEach((m, idx) => {
+                            let val = n[m.id] !== undefined && n[m.id] !== '' ? n[m.id] : '-';
+                            let huruf = val !== '-' ? terbilangArab(val) : '-';
+                            let isMerah = val !== '-' && parseFloat(val) < 65; let cMerah = isMerah ? "huruf-merah" : "";
+                            
+                            barisTabel += `<tr>`;
+                            if(idx === 0) {
+                                barisTabel += `
+                                <td rowspan="${items.length}" class="arab" style="text-align:center; vertical-align:middle; font-size:16px;">${toArabicNum(groupNo)}</td>
+                                <td rowspan="${items.length}" style="text-align:center; vertical-align:middle; padding:5px;">
+                                    <div class="arab" style="font-size:16px; font-weight:bold;">${kat.arab}</div>
+                                    <div class="latin" style="font-size:12px; margin-top:4px;">${kat.latin}</div>
+                                </td>`;
+                                groupNo++;
+                            }
+                            barisTabel += `
+                                <td class="arab" style="text-align:right; padding:4px 8px; font-size:16px;">${m.arab}</td>
+                                <td class="latin" style="text-align:left; padding:4px 8px; font-size:13px; direction:ltr;">${m.latin}</td>
+                                <td class="${cMerah} latin" style="text-align:center; font-size:15px;"><b>${val}</b></td>
+                                <td class="${cMerah} arab" style="text-align:right; padding:4px 8px;">${huruf}</td>
+                            </tr>`;
+                        });
+                    }
+                });
+            }
+
+            let k = n.kalkulasi || { total:0, rata:0, predikat:'-', rankFull:'-' };
+            
+            let displayRank = (k.rankFull !== '-' && parseInt(k.rankFull) <= maxRank) ? k.rankFull : '-';
+            
+            let isNaik = abs.naik !== false;
+            let isRasib = k.predikat === 'راسب'; 
+
+            let teksGender = (siswa.jk === 'P') ? 'الطالبة المذكورة' : 'الطالب المذكور';
+            let tLulusCore = `ناجح${siswa.jk==='P'?'ة':''}`;
+            let tGagalCore = `راسب${siswa.jk==='P'?'ة':''}`;
+            
+            let tampilkanLulus = isNaik && !isRasib; 
+
+            let teksLulus = tampilkanLulus
+                ? `<b>${tLulusCore}</b> / <span style="text-decoration:line-through;" class="huruf-merah">${tGagalCore}</span>`
+                : `<span style="text-decoration:line-through;">${tLulusCore}</span> / <b class="huruf-merah">${tGagalCore}</b>`;
+
+            let tapelRaw = idt.tapel || "-";
+            let tapelArab = toArabicNum(tapelRaw).replace(/H/ig, 'هـ').replace(/M/ig, 'م');
+            
+            let judulArab = jenis === 'akademik' ? 'كشف الدرجات' : 'كشف الدرجات للدروس الإضافية';
+            let judulLatin = jenis === 'akademik' ? 'Laporan Hasil Belajar Santri Madrasah' : 'Laporan Hasil Ujian Lisan dan Ekstrakurikuler Santri Madrasah';
+
+            let html = `
+            <div class="rapor-page" dir="rtl" style="text-align:right;">
+                <div class="rapor-body">
+                    <div class="kop-surat">
+                        <h2 class="arab">${judulArab} للمرحلة ${idt.tingkat_arab||'الثانوية'}</h2>
+                        <h3 class="arab">في العام الدراسي: ${tapelArab}</h3>
+                        <h2 class="latin">${judulLatin} ${idt.madrasah||"-"}</h2>
+                        <h3 class="latin">Tahun Pelajaran ${tapelRaw}</h3>
+                    </div>
+
+                    <table class="tabel-identitas" style="border:none; width:100%; direction:rtl; margin-bottom:10px;">
+                        <tr>
+                            <td style="width:20%; border:none; white-space:nowrap;">
+                                <span class="arab">الاسم</span> / <span class="latin">Nama</span>
+                            </td>
+                            <td style="width:2%; border:none; text-align:center;">:</td>
+                            <td style="width:38%; border:none; text-align:right;">
+                                <span class="arab" style="border-bottom:1px solid #000; padding-bottom:1px; font-size:16px; font-weight:bold; display:inline-block; margin-bottom:3px;">${siswa.arab}</span>
+                                <div class="latin" style="font-weight:normal;">${siswa.nama}</div>
+                            </td>
+                            
+                            <td style="width:15%; padding-right:15px; border:none; white-space:nowrap;">
+                                <span class="arab">الصف</span> / <span class="latin">Kelas</span>
+                            </td>
+                            <td style="width:2%; border:none; text-align:center;">:</td>
+                            <td style="width:23%; border:none; text-align:right;" class="arab">
+                                ${idt.kelas||"-"}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="border:none; white-space:nowrap;">
+                                <span class="arab">رقم القيد</span> / <span class="latin">Nomor Induk</span>
+                            </td>
+                            <td style="border:none; text-align:center;">:</td>
+                            <td class="latin" style="border:none; text-align:right;">
+                                ${siswa.nism||"-"} / ${siswa.nisn||"-"}
+                            </td>
+                            
+                            <td style="padding-right:15px; border:none; white-space:nowrap;">
+                                <span class="arab">الفصل</span> / <span class="latin">Semester</span>
+                            </td>
+                            <td style="border:none; text-align:center;">:</td>
+                            <td class="arab" style="border:none; text-align:right; direction: rtl;">
+                                ${idt.semester_arab||""} / <span class="latin">${idt.semester_latin||""}</span>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div class="tabel-wrapper">
+                    <table class="tabel-nilai">`;
+
+            if(jenis === 'akademik') {
+                html += `
+                        <thead>
+                            <tr class="header-hijau arab">
+                                <th rowspan="2" style="width:5%">الرقم<br><span class="latin" style="font-size:12px;">No</span></th>
+                                <th rowspan="2" style="width:45%">المواد الدراسية / <span class="latin">Mata Pelajaran</span></th>
+                                <th colspan="2">الدرجات / <span class="latin">Nilai</span></th>
+                                <th rowspan="2" style="width:12%">المعدل التراكمي /<br><span class="latin">Rata-Rata Kelas</span></th>
+                            </tr>
+                            <tr class="header-hijau arab">
+                                <th style="width:13%">رقما</th><th style="width:25%">كتابة</th>
+                            </tr>
+                        </thead>`;
+            } else {
+                html += `
+                        <thead class="header-kuning arab">
+                            <tr>
+                                <th rowspan="2" style="width:5%; border:1px solid #000;">الرقم</th>
+                                <th rowspan="2" colspan="3" style="width:55%; border:1px solid #000;">المواد الدراسية / <span class="latin" style="font-size:13px;">Mata Pelajaran</span></th>
+                                <th colspan="2" style="width:40%; border:1px solid #000;">الدرجات / <span class="latin" style="font-size:13px;">Nilai</span></th>
+                            </tr>
+                            <tr>
+                                <th style="width:10%; font-size:13px; border:1px solid #000;">رقما / <br><span class="latin" style="font-size:11.5px;">Angka</span></th>
+                                <th style="width:30%; font-size:13px; border:1px solid #000;">كتابة / <span class="latin" style="font-size:11.5px;">Huruf</span></th>
+                            </tr>
+                        </thead>`;
+            }
+
+            html += `           <tbody>${barisTabel}</tbody>`;
+
+            if(jenis === 'akademik') {
+                html += `
+                        <tfoot>
+                            <tr>
+                                <td colspan="2" class="text-right arab">مجموع الدرجات / <span class="latin">Jumlah Nilai</span></td>
+                                <td class="latin"><b>${k.total}</b></td><td colspan="2" class="arab" style="text-align:right !important;">${terbilangArab(k.total)}</td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" class="text-right arab">النسبة المئوية / <span class="latin">Nilai Rata-Rata</span></td>
+                                <td class="latin"><b>${k.rata}</b></td><td colspan="2" class="arab" style="text-align:right !important;">${terbilangArab(k.rata)}</td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" class="text-right arab">الترتيب / <span class="latin">Ranking</span></td>
+                                <td class="latin"><b>${displayRank}</b></td><td colspan="2" class="arab" style="text-align:center;">الملاحظة / <span class="latin">Catatan</span></td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" class="text-right arab">التقدير / <span class="latin">Predikat</span></td>
+                                <td class="${isRasib ? 'huruf-merah':''} arab"><b>${k.predikat}</b></td>
+                                <td colspan="2" rowspan="6" class="latin" style="font-size:13.5px; vertical-align:top; text-align:justify; direction:ltr; padding:8px; white-space: pre-wrap;">${abs.catatan||""}</td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" class="text-right arab">السلوك / <span class="latin">Kepribadian</span></td>
+                                <td class="latin"><b>${abs.sikap||"-"}</b></td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="arab" style="text-align:center; background-color:#f9f9f9; font-weight:bold;">عدد الغياب في اليوم / <span class="latin">Jumlah Absensi per-hari</span></td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" class="text-right arab">غياب / <span class="latin">Alpa</span></td>
+                                <td class="latin">${abs.alfa||0}</td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" class="text-right arab">إذن / <span class="latin">Izin</span></td>
+                                <td class="latin">${abs.izin||0}</td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" class="text-right arab">مريض / <span class="latin">Sakit</span></td>
+                                <td class="latin">${abs.sakit||0}</td>
+                            </tr>
+                        </tfoot>`;
+            }
+            html += `       </table></div>
+                </div>`; 
+
+            html += `<div class="footer-rapor" style="margin-top: 15px;">
+                        <div style="display:flex; justify-content:space-between; direction:rtl; width:100%; align-items:flex-start;">`;
+
+            html += `       <div style="width:48%; text-align:right;">
+                                <table style="border:none; margin:0 0 10px 0; padding:0; direction:rtl; text-align:right; font-size:13px; float:right;">
+                                    <tr>
+                                        <td class="arab" style="border:none; padding:0 0 2px 5px;">سلم الكشف في</td>
+                                        <td style="border:none; padding:0 5px 2px 5px;">:</td>
+                                        <td style="border:none; padding:0 0 2px 0; text-align:right;">
+                                            <div class="latin" dir="ltr" style="display:inline-block;">${idt.tempat || ''}</div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="arab" style="border:none; padding:0 0 0 5px; vertical-align:top;">التاريخ</td>
+                                        <td style="border:none; padding:0 5px 0 5px; vertical-align:top;">:</td>
+                                        <td style="border:none; padding:0; text-align:right;">
+                                            <div class="latin" dir="ltr" style="display:inline-block; text-align:right;">${idt.tgl_hijriyah || ''}</div><br>
+                                            <div class="latin" dir="ltr" style="display:inline-block; text-align:right;">${idt.tgl_masehi || ''}</div>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>`;
+
+            html += `       <div style="width:48%; text-align:left; direction:ltr;" class="latin">`;
+            if(isGenap && jenis === 'akademik') {
+                let klsCek = (idt.kelas || "").toUpperCase().trim();
+                let valNaik = (kelasNaik || "").toUpperCase().trim();
+                
+                let isKelulusan = klsCek === "3 MTS" || klsCek === "3 MA" || klsCek.includes("IX") || klsCek.includes("XII") || valNaik === "LULUS";
+
+                let tNaik = isKelulusan ? `<b>LULUS</b>` : `<b>NAIK</b> ke kelas <b>${kelasNaik}</b>`;
+                let tTinggal = isKelulusan ? `<b>TIDAK LULUS dan TINGGAL di kelas ${idt.kelas}</b>` : `<b>TINGGAL</b> di kelas <b>${kelasTinggal}</b>`;
+
+                if(tampilkanLulus) { tTinggal = `<span style="text-decoration:line-through;">${tTinggal}</span>`; } 
+                else { tNaik = `<span style="text-decoration:line-through;">${tNaik}</span>`; tTinggal = `<span class="huruf-merah">${tTinggal}</span>`; }
+
+                html += `       <div style="border:1px solid #000; padding:10px; font-size:12px; box-sizing:border-box;">
+                                    <div class="arab" style="text-align:center; direction:rtl; margin-bottom:10px; font-size:15px; line-height:1.5;">
+                                        <div>التقرير : اعتمادا على الدرجات السابقة تقرر بأن</div>
+                                        <div>${teksGender} : ${teksLulus}</div>
+                                    </div>
+                                    <table style="width:100%; border:none;">
+                                        <tr>
+                                            <td style="vertical-align:top; border:none; padding:0; width:75px;">Keputusan :</td>
+                                            <td style="border:none; padding:0; line-height:1.5;">
+                                                Dengan memperhatikan nilai yang dicapai, maka santri ini ditetapkan :<br><br>
+                                                ${tNaik}<br>${tTinggal}
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>`;
+            }
+            html += `       </div>
+                        </div>`; 
+
+            let namaKepala = idt.kepala ? idt.kepala : '';
+            let namaWali = idt.wali ? idt.wali : '';
+            let labelWaliKelas = idt.jk_wali === 'P' ? 'ولية الفصل،' : 'ولي الفصل،';
+            let labelWaliSiswa = siswa.jk === 'P' ? 'ولي الطالبة' : 'ولي الطالب';
+            let labelKepsek = `بمعرفة مدير المرحلة ${idt.tingkat_arab || 'الثانوية'}`;
+
+            let smtLatin = (idt.semester_latin || "").toLowerCase();
+            let smtArab = (idt.semester_arab || "").toLowerCase();
+            let isSemesterGenapVal = smtArab.includes('الثاني') || smtArab.includes('ثاني') || smtLatin.includes('genap') || smtLatin.includes('ii') || smtLatin.includes('2');
+
+            html += `   <div style="margin-top:15px;">
+                            <table style="width:100%; border:none; text-align:center; font-size:15px; direction:rtl; table-layout:fixed;">
+                                <tr>
+                                    <td style="width:33%; vertical-align:bottom;">`;
+            
+            if(isCetakTTD) {
+                html += `               <div class="arab">${labelWaliKelas}</div>
+                                        <div class="ttd-box"></div>
+                                        <div class="arab" style="font-size:16px; font-weight:bold;">${namaWali}</div>`;
+            }
+
+            html += `               </td>`;
+
+            if (jenis === 'akademik') {
+                if(isSemesterGenapVal) {
+                    html += `       <td style="width:34%; vertical-align:bottom;">`;
+                    if(isCetakTTD) {
+                        html += `       <div class="arab">${labelWaliSiswa}</div>
+                                        <div class="ttd-box"></div>
+                                        <div class="arab" style="font-size:16px;">.......................</div>`;
+                    }
+                    html += `       </td><td style="width:33%; vertical-align:bottom;">`;
+                    if(isCetakTTD) {
+                        html += `       <div class="arab">${labelKepsek}</div>
+                                        <div class="ttd-box"></div>
+                                        <div class="arab" style="font-size:16px; font-weight:bold;">${namaKepala}</div>`;
+                    }
+                    html += `       </td>`;
+                } else {
+                    html += `       <td style="width:34%; vertical-align:bottom;"></td><td style="width:33%; vertical-align:bottom;">`;
+                    if(isCetakTTD) {
+                        html += `       <div class="arab">${labelWaliSiswa}</div>
+                                        <div class="ttd-box"></div>
+                                        <div class="arab" style="font-size:16px;">.......................</div>`;
+                    }
+                    html += `       </td>`;
+                }
+            } else {
+                html += `           <td style="width:34%; vertical-align:bottom;"></td>
+                                    <td style="width:33%; vertical-align:bottom;"></td>`;
+            }
+
+            html += `           </tr>
+                            </table>
+                        </div> </div> </div> `;
+
+            return html;
+        }
+
+        function previewRapor() {
+            let nisn = document.getElementById('c_pilih_siswa').value;
+            let jenis = document.getElementById('c_jenis_rapor').value;
+            let isGenap = document.getElementById('c_is_genap').checked;
+            let kelasNaik = document.getElementById('c_kelas_naik').value;
+            let kelasTinggal = document.getElementById('c_kelas_tinggal').value;
+            let isCetakTTD = document.getElementById('c_mode_cetak').value === 'ttd';
+            let maxRank = parseInt(document.getElementById('c_batas_peringkat').value) || 10;
+            let area = document.getElementById('print-area');
+            
+            if(!nisn) { area.innerHTML = "<div style='text-align:center; padding:50px; color:#666;' class='latin'>Silakan pilih siswa atau klik 'Tampilkan Semua Siswa'</div>"; return; }
+            
+            let mapelPrLength = db.mapel.praktik.length;
+            let mapelAkLength = db.mapel.akademik.length;
+            if(jenis === 'praktik' && mapelPrLength === 0) { area.innerHTML = "<div style='text-align:center; padding:50px; color:red;' class='latin'>Data Mapel Praktik kosong!</div>"; return; }
+            if(jenis === 'akademik' && mapelAkLength === 0) { area.innerHTML = "<div style='text-align:center; padding:50px; color:red;' class='latin'>Data Mapel Akademik kosong!</div>"; return; }
+
+            area.innerHTML = generateHTMLRaporSatuSiswa(nisn, jenis, isGenap, kelasNaik, kelasTinggal, isCetakTTD, maxRank);
+        }
+
+        function previewSemuaRapor() {
+            let jenis = document.getElementById('c_jenis_rapor').value;
+            let isGenap = document.getElementById('c_is_genap').checked;
+            let kelasNaik = document.getElementById('c_kelas_naik').value;
+            let kelasTinggal = document.getElementById('c_kelas_tinggal').value;
+            let isCetakTTD = document.getElementById('c_mode_cetak').value === 'ttd';
+            let maxRank = parseInt(document.getElementById('c_batas_peringkat').value) || 10;
+            let area = document.getElementById('print-area');
+
+            if(db.siswa.length === 0) return alert("Data siswa masih kosong!");
+            let mapelPrLength = db.mapel.praktik.length;
+            let mapelAkLength = db.mapel.akademik.length;
+            if(jenis === 'praktik' && mapelPrLength === 0) return alert("Data Mapel Praktik kosong!");
+            if(jenis === 'akademik' && mapelAkLength === 0) return alert("Data Mapel Akademik kosong!");
+
+            let fullHtml = "";
+            db.siswa.forEach(s => {
+                fullHtml += generateHTMLRaporSatuSiswa(s.nisn, jenis, isGenap, kelasNaik, kelasTinggal, isCetakTTD, maxRank);
+            });
+            area.innerHTML = fullHtml;
+        }
+    </script>
+</body>
+</html>
