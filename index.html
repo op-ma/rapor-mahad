@@ -823,6 +823,7 @@
             saveData(); hitungDanRenderRekap('akademik');
         }
 
+        // --- MANAJEMEN MODAL CATATAN WALI KELAS ---
         window.editCatatan = function(nisn) {
             let s = db.siswa.find(x => x.nisn === nisn);
             let a = db.absensi[nisn] || {};
@@ -1212,8 +1213,8 @@
             let tapelRaw = idt.tapel || "-";
             let tapelArab = toArabicNum(tapelRaw).replace(/H/ig, 'هـ').replace(/M/ig, 'م');
             
-            let judulArab = jenis === 'akademik' ? 'كشف الدرجات' : 'كشف الدرجات للدروس الإضافية';
-            let judulLatin = jenis === 'akademik' ? 'Laporan Hasil Belajar Santri Madrasah' : 'Laporan Hasil Ujian Lisan dan Ekstrakurikuler Santri Madrasah';
+            let judulArab = jenis === 'akademik' ? 'كشف الدرجات (الأكاديمية)' : 'كشف الدرجات للدروس الإضافية';
+            let judulLatin = jenis === 'akademik' ? 'Laporan Hasil Belajar Santri Madrasah' : 'Laporan Hasil Ujian Lisan و Ekstrakurikuler Santri';
 
             let html = `
             <div class="rapor-page" dir="rtl" style="text-align:right;">
@@ -1444,7 +1445,13 @@
                 }
             } else {
                 html += `           <td style="width:34%; vertical-align:bottom;"></td>
-                                    <td style="width:33%; vertical-align:bottom;"></td>`;
+                                    <td style="width:33%; vertical-align:bottom;">`;
+                if(isCetakTTD) {
+                    html += `       <div class="arab">${labelWaliSiswa}</div>
+                                    <div class="ttd-box"></div>
+                                    <div class="arab" style="font-size:16px;">.......................</div>`;
+                }
+                html += `           </td>`;
             }
 
             html += `           </tr>
