@@ -1554,20 +1554,21 @@
                     let isMerah = val !== '-' && parseFloat(val) < 65; let cMerah = isMerah ? "huruf-merah" : "";
                     let valCell = isMerah ? val : `<b>${val}</b>`;
                     let rataKelas = getRataKelas(jenis, m.id);
+                    // Padding diperkecil agar tabel lebih rapat dan muat 1 halaman
                     barisTabel += `
                     <tr>
                         <td class="arab">${toArabicNum(no)}</td>
                         <td style="padding:0 !important; height:100%;">
                             <table style="width:100%; height:100%; border:none; border-collapse:collapse; margin:0;">
                                 <tr>
-                                    <td class="arab" style="border:none; border-left:1px solid #000; width:50%; text-align:right; padding:6px 8px;">${m.arab}</td>
-                                    <td class="latin" style="border:none; width:50%; text-align:left; padding:6px 8px; font-size:13px; direction:ltr;">${m.latin}</td>
+                                    <td class="arab" style="border:none; border-left:1px solid #000; width:50%; text-align:right; padding:3px 5px;">${m.arab}</td>
+                                    <td class="latin" style="border:none; width:50%; text-align:left; padding:3px 5px; font-size:12px; direction:ltr;">${m.latin}</td>
                                 </tr>
                             </table>
                         </td>
-                        <td class="${cMerah} latin">${valCell}</td>
-                        <td class="${cMerah} arab" style="text-align:right !important; padding-right: 12px !important;">${huruf}</td>
-                        <td class="latin">${rataKelas}</td>
+                        <td class="${cMerah} latin" style="text-align:center;">${valCell}</td>
+                        <td class="${cMerah} arab" style="text-align:right !important; padding-right: 8px !important;">${huruf}</td>
+                        <td class="latin" style="text-align:center;">${rataKelas}</td>
                     </tr>`; no++;
                 });
             } else {
@@ -1583,17 +1584,17 @@
                             barisTabel += `<tr>`;
                             if(idx === 0) {
                                 barisTabel += `
-                                <td rowspan="${items.length}" class="arab" style="text-align:center; vertical-align:middle; font-size:16px;">${toArabicNum(groupNo)}</td>
-                                <td rowspan="${items.length}" style="text-align:center; vertical-align:middle; padding:5px;">
-                                    <div class="arab" style="font-size:16px; font-weight:bold;">${kat.arab}</div>
-                                    <div class="latin" style="font-size:12px; margin-top:4px;">${kat.latin}</div>
+                                <td rowspan="${items.length}" class="arab" style="text-align:center; vertical-align:middle; font-size:15px;">${toArabicNum(groupNo)}</td>
+                                <td rowspan="${items.length}" style="text-align:center; vertical-align:middle; padding:3px;">
+                                    <div class="arab" style="font-size:15px; font-weight:bold;">${kat.arab}</div>
+                                    <div class="latin" style="font-size:11px; margin-top:2px;">${kat.latin}</div>
                                 </td>`; groupNo++;
                             }
                             barisTabel += `
-                                <td class="arab" style="text-align:right; padding:4px 8px; font-size:16px;">${m.arab}</td>
-                                <td class="latin" style="text-align:left; padding:4px 8px; font-size:13px; direction:ltr;">${m.latin}</td>
-                                <td class="${cMerah} latin" style="text-align:center; font-size:15px;">${valCell}</td>
-                                <td class="${cMerah} arab" style="text-align:right !important; padding-right: 12px !important;">${huruf}</td>
+                                <td class="arab" style="text-align:right; padding:2px 5px; font-size:15px;">${m.arab}</td>
+                                <td class="latin" style="text-align:left; padding:2px 5px; font-size:12px; direction:ltr;">${m.latin}</td>
+                                <td class="${cMerah} latin" style="text-align:center; font-size:14px;">${valCell}</td>
+                                <td class="${cMerah} arab" style="text-align:right !important; padding-right: 8px !important;">${huruf}</td>
                             </tr>`;
                         });
                     }
@@ -1611,68 +1612,117 @@
                 : `<span style="text-decoration:line-through;">${tLulusCore}</span> / <b class="huruf-merah">${tGagalCore}</b>`;
             let tapelRaw = idt.tapel || "-";
             let tapelArab = toArabicNum(tapelRaw).replace(/H/ig, 'هـ').replace(/M/ig, 'م');
-let judulArab = jenis === 'akademik' ? 'كشف الدرجات' : 'كشف الدرجات الإضافية'; 
-let judulLatin = jenis === 'akademik' ? 'Laporan Hasil Belajar Santri Madrasah' : 'Laporan Hasil Ujian Lisan & Ekstrakurikuler Santri';
+            let judulArab = jenis === 'akademik' ? 'كشف الدرجات' : 'كشف الدرجات الإضافية'; 
+            let judulLatin = jenis === 'akademik' ? 'Laporan Hasil Belajar Santri Madrasah' : 'Laporan Hasil Ujian Lisan & Ekstrakurikuler Santri';
 
-            let html = `
-            <div class="rapor-page" dir="rtl" style="text-align:right;">
+            // CSS Khusus untuk memaksakan 1 Halaman saat dicetak
+            let printStyle = `
+                <style>
+                    @media print {
+                        .rapor-page-container {
+                            page-break-after: always;
+                            page-break-inside: avoid;
+                            max-height: 100vh;
+                            width: 100%;
+                            overflow: hidden;
+                        }
+                        .tabel-nilai td, .tabel-nilai th { padding: 2px !important; }
+                        .kop-surat h2 { font-size: 18px !important; margin: 0 !important; }
+                        .kop-surat h3 { font-size: 14px !important; margin: 0 !important; }
+                        .tabel-identitas td { padding: 0 !important; }
+                        .footer-rapor { page-break-inside: avoid; margin-top: 5px !important; }
+                        .ttd-box { min-height: 50px !important; height: 50px !important; }
+                    }
+                    .ttd-box { height: 60px; min-height: 60px; } /* Menghindari area tanda tangan menghilang */
+                </style>
+            `;
+
+            let html = printStyle + `
+            <div class="rapor-page rapor-page-container" dir="rtl" style="text-align:right;">
                 <div class="rapor-body">
-                    <div class="kop-surat">
+                    <div class="kop-surat" style="margin-bottom: 5px;">
                         <h2 class="arab">${judulArab} للمرحلة ${idt.tingkat_arab||'الثانوية'}</h2>
                         <h3 class="arab">في العام الدراسي: ${tapelArab}</h3>
-                        <h2 class="latin">${judulLatin} ${idt.madrasah||"-"}</h2>
-                        <h3 class="latin">Tahun Pelajaran ${tapelRaw}</h3>
+                        <h2 class="latin" style="font-size:16px;">${judulLatin} ${idt.madrasah||"-"}</h2>
+                        <h3 class="latin" style="font-size:13px;">Tahun Pelajaran ${tapelRaw}</h3>
                     </div>
 
-                    <table class="tabel-identitas" style="border:none; width:100%; direction:rtl; margin-bottom:10px;">
+                    <table class="tabel-identitas" style="border:none; width:100%; direction:rtl; margin-bottom:5px; table-layout:fixed; font-size:13px;">
+                        <colgroup>
+                            <col style="width:5%;">
+                            <col style="width:15%;">
+                            <col style="width:2%;">
+                            <col style="width:35%;">
+                            <col style="width:13%;">
+                            <col style="width:2%;">
+                            <col style="width:28%;">
+                        </colgroup>
                         <tr>
-                            <td style="width:20%; border:none; white-space:nowrap;"><span class="arab">الاسم</span> / <span class="latin">Nama</span></td>
-                            <td style="width:2%; border:none; text-align:center;">:</td>
-                            <td style="width:38%; border:none; text-align:right;">
-                                <span class="arab" style="border-bottom:1px solid #000; padding-bottom:1px; display:inline-block; margin-bottom:3px; font-weight:normal;">${siswa.arab}</span>
+                            <td style="border:none;"></td> 
+                            <td style="border:none; white-space:nowrap;"><span class="arab">الاسم</span> / <span class="latin">Nama</span></td>
+                            <td style="border:none; text-align:center;">:</td>
+                            <td style="border:none; text-align:right;">
+                                <span class="arab" style="border-bottom:1px solid #000; padding-bottom:1px; display:inline-block; margin-bottom:1px; font-weight:normal;">${siswa.arab}</span>
                                 <div class="latin" style="font-weight:normal;">${siswa.nama}</div>
                             </td>
-                            <td style="width:15%; padding-right:15px; border:none; white-space:nowrap;"><span class="arab">الصف</span> / <span class="latin">Kelas</span></td>
-                            <td style="width:2%; border:none; text-align:center;">:</td>
-                            <td style="width:23%; border:none; text-align:right;" class="arab">${idt.kelas||"-"}</td>
+                            <td style="padding-right:10px; border:none; white-space:nowrap;"><span class="arab">الصف</span> / <span class="latin">Kelas</span></td>
+                            <td style="border:none; text-align:center;">:</td>
+                            <td style="border:none; text-align:right;" class="arab">${idt.kelas||"-"}</td>
                         </tr>
                         <tr>
+                            <td style="border:none;"></td> 
                             <td style="border:none; white-space:nowrap;"><span class="arab">رقم القيد</span> / <span class="latin">Nomor Induk</span></td>
                             <td style="border:none; text-align:center;">:</td>
                             <td class="latin" style="border:none; text-align:right;">${siswa.nism||"-"} / ${siswa.nisn||"-"}</td>
-                            <td style="padding-right:15px; border:none; white-space:nowrap;"><span class="arab">الفصل</span> / <span class="latin">Semester</span></td>
+                            <td style="padding-right:10px; border:none; white-space:nowrap;"><span class="arab">الفصل</span> / <span class="latin">Semester</span></td>
                             <td style="border:none; text-align:center;">:</td>
                             <td class="arab" style="border:none; text-align:right; direction: rtl;">${idt.semester_arab||""} / <span class="latin">${idt.semester_latin||""}</span></td>
                         </tr>
                     </table>
 
                     <div class="tabel-wrapper">
-                    <table class="tabel-nilai">`;
+                    <table class="tabel-nilai" style="width:100%; table-layout:fixed; border-collapse:collapse; font-size:13px;">`;
 
             if(jenis === 'akademik') {
                 html += `
+                        <colgroup>
+                            <col style="width:5%;">
+                            <col style="width:48%;">
+                            <col style="width:6%;">
+                            <col style="width:31%;">
+                            <col style="width:10%;">
+                        </colgroup>
                         <thead>
                             <tr class="header-hijau arab">
-                                <th rowspan="2" style="width:5%">الرقم<br><span class="latin" style="font-size:12px;">No</span></th>
-                                <th rowspan="2" style="width:45%">المواد الدراسية / <span class="latin">Mata Pelajaran</span></th>
+                                <th rowspan="2">الرقم<br></span></th>
+                                <th rowspan="2">المواد الدراسية / <span class="latin">Mata Pelajaran</span></th>
                                 <th colspan="2">الدرجات / <span class="latin">Nilai</span></th>
-                                <th rowspan="2" style="width:12%">المعدل التراكمي /<br><span class="latin">Rata-Rata Kelas</span></th>
+                                <th rowspan="2">المعدل التراكمي /<br><span class="latin">Rata-Rata Kelas</span></th>
                             </tr>
                             <tr class="header-hijau arab">
-                                <th style="width:13%">رقما</th><th style="width:25%">كتابة</th>
+                                <th>رقما / <br><span class="latin" style="font-size:10px;">Angka</span></th>
+                                <th>كتابة / <span class="latin" style="font-size:10px;">Huruf</span></th>
                             </tr>
                         </thead>`;
             } else {
                 html += `
+                        <colgroup>
+                            <col style="width:5%;">
+                            <col style="width:25%;">
+                            <col style="width:15%;">
+                            <col style="width:12%;">
+                            <col style="width:5%;">
+                            <col style="width:25%;">
+                        </colgroup>
                         <thead class="header-kuning arab">
                             <tr>
-                                <th rowspan="2" style="width:5%; border:1px solid #000;">الرقم</th>
-                                <th rowspan="2" colspan="3" style="width:55%; border:1px solid #000;">المواد الدراسية / <span class="latin" style="font-size:13px;">Mata Pelajaran</span></th>
-                                <th colspan="2" style="width:40%; border:1px solid #000;">الدرجات / <span class="latin" style="font-size:13px;">Nilai</span></th>
+                                <th rowspan="2" style="border:1px solid #000;">الرقم</th>
+                                <th rowspan="2" colspan="3" style="border:1px solid #000;">المواد الدراسية / <span class="latin" style="font-size:12px;">Mata Pelajaran</span></th>
+                                <th colspan="2" style="border:1px solid #000;">الدرجات / <span class="latin" style="font-size:12px;">Nilai</span></th>
                             </tr>
                             <tr>
-                                <th style="width:10%; font-size:13px; border:1px solid #000;">رقما / <br><span class="latin" style="font-size:11.5px;">Angka</span></th>
-                                <th style="width:30%; font-size:13px; border:1px solid #000;">كتابة / <span class="latin" style="font-size:11.5px;">Huruf</span></th>
+                                <th style="font-size:12px; border:1px solid #000;">رقما / <br><span class="latin" style="font-size:10px;">Angka</span></th>
+                                <th style="font-size:12px; border:1px solid #000;">كتابة / <span class="latin" style="font-size:10px;">Huruf</span></th>
                             </tr>
                         </thead>`;
             }
@@ -1683,50 +1733,50 @@ let judulLatin = jenis === 'akademik' ? 'Laporan Hasil Belajar Santri Madrasah' 
                 html += `
                         <tfoot>
                             <tr>
-                                <td colspan="2" class="text-right arab">مجموع الدرجات / <span class="latin">Jumlah Nilai</span></td>
-                                <td class="latin"><b>${k.total}</b></td><td colspan="2" class="arab" style="text-align:right !important; padding-right: 12px !important;">${terbilangArab(k.total)}</td>
+                                <td colspan="2" class="text-right arab" style="padding:2px 5px;">مجموع الدرجات / <span class="latin">Jumlah Nilai</span></td>
+                                <td class="latin" style="text-align:center;"><b>${k.total}</b></td><td colspan="2" class="arab" style="text-align:right !important; padding-right: 8px !important;">${terbilangArab(k.total)}</td>
                             </tr>
                             <tr>
-                                <td colspan="2" class="text-right arab">النسبة المئوية / <span class="latin">Nilai Rata-Rata</span></td>
-                                <td class="latin"><b>${k.rata}</b></td><td colspan="2" class="arab" style="text-align:right !important; padding-right: 12px !important;">${terbilangArab(k.rata)}</td>
+                                <td colspan="2" class="text-right arab" style="padding:2px 5px;">النسبة المئوية / <span class="latin">Nilai Rata-Rata</span></td>
+                                <td class="latin" style="text-align:center;"><b>${k.rata}</b></td><td colspan="2" class="arab" style="text-align:right !important; padding-right: 8px !important;">${terbilangArab(k.rata)}</td>
                             </tr>
                             <tr>
-                                <td colspan="2" class="text-right arab">الترتيب / <span class="latin">Ranking</span></td>
-                                <td class="latin"><b>${displayRank}</b></td><td colspan="2" class="arab" style="text-align:center;">الملاحظة / <span class="latin">Catatan</span></td>
+                                <td colspan="2" class="text-right arab" style="padding:2px 5px;">الترتيب / <span class="latin">Ranking</span></td>
+                                <td class="latin" style="text-align:center;"><b>${displayRank}</b></td><td colspan="2" class="arab" style="text-align:center;">الملاحظة / <span class="latin">Catatan</span></td>
                             </tr>
                             <tr>
-                                <td colspan="2" class="text-right arab">التقدير / <span class="latin">Predikat</span></td>
-                                <td class="${isRasib ? 'huruf-merah':''} arab"><b>${k.predikat}</b></td>
-                                <td colspan="2" rowspan="6" class="latin catatan-wali" style="vertical-align:top; direction:ltr; padding:8px; white-space: pre-wrap; text-align: justify; text-justify: inter-word;">${abs.catatan||""}</td>
+                                <td colspan="2" class="text-right arab" style="padding:2px 5px;">التقدير / <span class="latin">Predikat</span></td>
+                                <td class="${isRasib ? 'huruf-merah':''} arab" style="text-align:center;"><b>${k.predikat}</b></td>
+                                <td colspan="2" rowspan="6" class="latin catatan-wali" style="vertical-align:top; direction:ltr; padding:4px 8px; white-space: pre-wrap; text-align: justify; text-justify: inter-word;">${abs.catatan||""}</td>
                             </tr>
                             <tr>
-                                <td colspan="2" class="text-right arab">السلوك / <span class="latin">Kepribadian</span></td>
-                                <td class="latin"><b>${abs.sikap||"-"}</b></td>
+                                <td colspan="2" class="text-right arab" style="padding:2px 5px;">السلوك / <span class="latin">Kepribadian</span></td>
+                                <td class="latin" style="text-align:center;"><b>${abs.sikap||"-"}</b></td>
                             </tr>
                             <tr>
-                                <td colspan="3" class="arab" style="text-align:center; background-color:#f9f9f9; font-weight:bold;">عدد الغياب في اليوم / <span class="latin">Jumlah Absensi per-hari</span></td>
+                                <td colspan="3" class="arab" style="text-align:center; background-color:#f9f9f9; padding:2px;">عدد الغياب في اليوم / <span class="latin">Jumlah Absensi per-hari</span></td>
                             </tr>
                             <tr>
-                                <td colspan="2" class="text-right arab">غياب / <span class="latin">Alpa</span></td>
-                                <td class="latin">${abs.alfa||0}</td>
+                                <td colspan="2" class="text-right arab" style="padding:2px 5px;">غياب / <span class="latin">Alpa</span></td>
+                                <td class="latin" style="text-align:center;">${abs.alfa||0}</td>
                             </tr>
                             <tr>
-                                <td colspan="2" class="text-right arab">إذن / <span class="latin">Izin</span></td>
-                                <td class="latin">${abs.izin||0}</td>
+                                <td colspan="2" class="text-right arab" style="padding:2px 5px;">إذن / <span class="latin">Izin</span></td>
+                                <td class="latin" style="text-align:center;">${abs.izin||0}</td>
                             </tr>
                             <tr>
-                                <td colspan="2" class="text-right arab">مريض / <span class="latin">Sakit</span></td>
-                                <td class="latin">${abs.sakit||0}</td>
+                                <td colspan="2" class="text-right arab" style="padding:2px 5px;">مريض / <span class="latin">Sakit</span></td>
+                                <td class="latin" style="text-align:center;">${abs.sakit||0}</td>
                             </tr>
                         </tfoot>`;
             }
             html += `       </table></div>
                 </div>`;
 
-            html += `<div class="footer-rapor" style="margin-top: 15px;">
+            html += `<div class="footer-rapor">
                         <div style="display:flex; justify-content:space-between; direction:rtl; width:100%; align-items:flex-start;">`;
             html += `       <div style="width:48%; text-align:right;">
-                                <table style="border:none; margin:0 0 10px 0; padding:0; direction:rtl; text-align:right; font-size:13px; float:right;">
+                                <table style="border:none; margin:0 0 5px 0; padding:0; direction:rtl; text-align:right; font-size:12px; float:right;">
                                     <tr>
                                         <td class="arab" style="border:none; padding:0 0 2px 5px;">سلم الكشف في</td>
                                         <td style="border:none; padding:0 5px 2px 5px;">:</td>
@@ -1750,21 +1800,21 @@ let judulLatin = jenis === 'akademik' ? 'Laporan Hasil Belajar Santri Madrasah' 
                 let tTinggal = isKelulusan ? `<b>TIDAK LULUS dan TINGGAL di kelas ${idt.kelas}</b>` : `<b>TINGGAL</b> di kelas <b>${kelasTinggal}</b>`;
                 if(tampilkanLulus) { tTinggal = `<span style="text-decoration:line-through;">${tTinggal}</span>`; } 
                 else { tNaik = `<span style="text-decoration:line-through;">${tNaik}</span>`; tTinggal = `<span class="huruf-merah">${tTinggal}</span>`; }
-                html += `       <div style="border:1px solid #000; padding:10px; font-size:12px; box-sizing:border-box;">
-                                    <table class="arab" dir="rtl" style="width:100%; border:none; margin-bottom:10px; font-size:15px; line-height:1.5;">
+                html += `       <div style="border:1px solid #000; padding:6px; font-size:11px; box-sizing:border-box;">
+                                    <table class="arab" dir="rtl" style="width:100%; border:none; margin-bottom:5px; font-size:13px; line-height:1.2;">
     <tr>
-        <td style="vertical-align:top; border:none; padding:0; width:60px; text-align:right;">التقرير</td>
-        <td style="vertical-align:top; border:none; padding:0; width:15px; text-align:center;">:</td>
+        <td style="vertical-align:top; border:none; padding:0; width:50px; text-align:right;">التقرير</td>
+        <td style="vertical-align:top; border:none; padding:0; width:10px; text-align:center;">:</td>
         <td style="border:none; padding:0; text-align:right;">
             اعتمادا على الدرجات السابقة تقرر بأن
-            <div style="margin-top:4px;">${teksGender} &nbsp;:&nbsp; ${teksLulus}</div>
+            <div style="margin-top:2px;">${teksGender} &nbsp;:&nbsp; ${teksLulus}</div>
         </td>
     </tr>
 </table>
                                     <table style="width:100%; border:none;">
     <tr>
-        <td style="vertical-align:top; border:none; padding:0; width:75px;">Keputusan :</td>
-        <td style="border:none; padding:0; line-height:1.5;">Dengan memperhatikan nilai yang dicapai, maka santri ini ditetapkan :<br>${tNaik}<br>${tTinggal}</td>
+        <td style="vertical-align:top; border:none; padding:0; width:65px;">Keputusan :</td>
+        <td style="border:none; padding:0; line-height:1.2;">Dengan memperhatikan nilai yang dicapai, maka santri ini ditetapkan :<br>${tNaik}<br>${tTinggal}</td>
     </tr>
 </table>
                                 </div>`;
@@ -1775,54 +1825,27 @@ let judulLatin = jenis === 'akademik' ? 'Laporan Hasil Belajar Santri Madrasah' 
             let namaKepala = idt.kepala ? idt.kepala : ''; let namaWali = idt.wali ? idt.wali : '';
             let labelWaliKelas = idt.jk_wali === 'P' ? 'ولية الفصل،' : 'ولي الفصل،'; let labelWaliSiswa = siswa.jk === 'P' ? 'ولي الطالبة' : 'ولي الطالب';
             let labelKepsek = `بمعرفة مدير المرحلة ${idt.tingkat_arab || 'الثانوية'}`;
-            let smtLatin = (idt.semester_latin || "").toLowerCase(); let smtArab = (idt.semester_arab || "").toLowerCase();
-            let isSemesterGenapVal = smtArab.includes('الثاني') || smtArab.includes('ثاني') || smtLatin.includes('genap') || smtLatin.includes('ii') || smtLatin.includes('2');
 
-            html += `   <div style="margin-top:15px;">
-                            <table style="width:100%; border:none; text-align:center; font-size:15px; direction:rtl; table-layout:fixed;">
+            // LOGIKA DIBUBAH: Semua tanda tangan (Wali Kelas, Orang Tua, dan Kepala) selalu dicetak permanen
+            html += `   <div style="margin-top:10px; padding-bottom:10px;">
+                            <table style="width:100%; border:none; text-align:center; font-size:14px; direction:rtl; table-layout:fixed;">
                                 <tr>
-                                    <td style="width:33%; vertical-align:bottom;">`;
-            if(isCetakTTD) {
-                html += `               <div class="arab">${labelWaliKelas}</div>
-                                        <div class="ttd-box"></div>
-                                        <div class="arab" style="font-size:16px; font-weight:bold;">${namaWali}</div>`;
-            }
-            html += `               </td>`;
-            if (jenis === 'akademik') {
-                if(isSemesterGenapVal) {
-                    html += `       <td style="width:34%; vertical-align:bottom;">`;
-                    if(isCetakTTD) {
-                        html += `       <div class="arab">${labelWaliSiswa}</div>
-                                        <div class="ttd-box"></div>
-                                        <div class="arab" style="font-size:16px;">.......................</div>`;
-                    }
-                    html += `       </td><td style="width:33%; vertical-align:bottom;">`;
-                    if(isCetakTTD) {
-                        html += `       <div class="arab">${labelKepsek}</div>
-                                        <div class="ttd-box"></div>
-                                        <div class="arab" style="font-size:16px; font-weight:bold;">${namaKepala}</div>`;
-                    }
-                    html += `       </td>`;
-                } else {
-                    html += `       <td style="width:34%; vertical-align:bottom;"></td><td style="width:33%; vertical-align:bottom;">`;
-                    if(isCetakTTD) {
-                        html += `       <div class="arab">${labelWaliSiswa}</div>
-                                        <div class="ttd-box"></div>
-                                        <div class="arab" style="font-size:16px;">.......................</div>`;
-                    }
-                    html += `       </td>`;
-                }
-            } else {
-                html += `           <td style="width:34%; vertical-align:bottom;"></td>
-                                    <td style="width:33%; vertical-align:bottom;">`;
-                if(isCetakTTD) {
-                    html += `       <div class="arab">${labelWaliSiswa}</div>
-                                    <div class="ttd-box"></div>
-                                    <div class="arab" style="font-size:16px;">.......................</div>`;
-                }
-                html += `           </td>`;
-            }
-            html += `           </tr>
+                                    <td style="width:33%; vertical-align:bottom;">
+                                        <div class="arab">${labelWaliKelas}</div>
+                                        <div class="ttd-box">&nbsp;</div>
+                                        <div class="arab" style="font-size:15px; font-weight:bold;">${namaWali}</div>
+                                    </td>
+                                    <td style="width:34%; vertical-align:bottom;">
+                                        <div class="arab">${labelWaliSiswa}</div>
+                                        <div class="ttd-box">&nbsp;</div>
+                                        <div class="arab" style="font-size:15px;">.............................</div>
+                                    </td>
+                                    <td style="width:33%; vertical-align:bottom;">
+                                        <div class="arab">${labelKepsek}</div>
+                                        <div class="ttd-box">&nbsp;</div>
+                                        <div class="arab" style="font-size:15px; font-weight:bold;">${namaKepala}</div>
+                                    </td>
+                                </tr>
                             </table>
                         </div> </div> </div>`;
             return html;
@@ -1895,5 +1918,46 @@ let judulLatin = jenis === 'akademik' ? 'Laporan Hasil Belajar Santri Madrasah' 
             }, 800);
         }
     </script>
+	<script>
+    // 1. Memblokir Klik Kanan (Inspect Element via Mouse)
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+    });
+
+    // 2. Memblokir Shortcut Keyboard (F12, Ctrl+Shift+I, Ctrl+U, dll)
+    document.addEventListener('keydown', function(e) {
+        // Blokir F12
+        if (e.key === 'F12') {
+            e.preventDefault();
+            return false;
+        }
+        // Blokir Ctrl + Shift + I (Buka Inspect Element)
+        if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+            e.preventDefault();
+            return false;
+        }
+        // Blokir Ctrl + Shift + J (Buka Console)
+        if (e.ctrlKey && e.shiftKey && e.key === 'J') {
+            e.preventDefault();
+            return false;
+        }
+        // Blokir Ctrl + U (View Page Source)
+        if (e.ctrlKey && e.key === 'U') {
+            e.preventDefault();
+            return false;
+        }
+        // Blokir Ctrl + S (Save Page)
+        if (e.ctrlKey && e.key === 'S') {
+            e.preventDefault();
+            return false;
+        }
+        // Blokir Ctrl + P (Print bawaan browser - opsional jika Anda pakai tombol print khusus)
+        // if (e.ctrlKey && e.key === 'P') {
+        //     e.preventDefault();
+        //     return false;
+        // }
+    });
+</script>
+	
 </body>
 </html>
