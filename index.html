@@ -1558,7 +1558,6 @@
                     let isMerah = val !== '-' && parseFloat(val) < 65; let cMerah = isMerah ? "huruf-merah" : "";
                     let valCell = isMerah ? val : `<b>${val}</b>`;
                     let rataKelas = getRataKelas(jenis, m.id);
-                    // Padding diperkecil agar tabel lebih rapat dan muat 1 halaman
                     barisTabel += `
                     <tr>
                         <td class="arab">${toArabicNum(no)}</td>
@@ -1628,7 +1627,7 @@
             let judulLatinHTML = jenis === 'akademik'
                 ? `<h2 class="latin" style="font-size:16px;">${judulLatin} ${idt.madrasah||"-"}</h2>`
                 : `<h2 class="latin" style="font-size:16px; line-height:1.3; margin-bottom:4px;">${judulLatin}<br>${idt.madrasah||"-"}</h2>`;
-            // CSS Khusus untuk memaksakan 1 Halaman saat dicetak
+
             let printStyle = `
                 <style>
                     @media print {
@@ -1656,7 +1655,7 @@
                     <div class="kop-surat" style="margin-bottom: 5px;">
                         ${judulArabHTML}
                         <h3 class="arab">في العام الدراسي: ${tapelArab}</h3>
-                        <h2 class="latin" style="font-size:16px; line-height:1.3; margin-bottom:4px;">${judulLatin}<br>${idt.madrasah||"-"}</h2>
+                        ${judulLatinHTML}
                         <h3 class="latin" style="font-size:13px;">Tahun Pelajaran ${tapelRaw}</h3>
                     </div>
 
