@@ -1619,10 +1619,15 @@
             let judulArab = jenis === 'akademik' ? 'كشف الدرجات' : 'كشف الدرجات الإضافية'; 
             let judulLatin = jenis === 'akademik' ? 'Laporan Hasil Belajar Santri Madrasah' : 'Laporan Hasil Ujian Lisan & Ekstrakurikuler Santri';
 
+            // Kondisi Judul Arab (Baris baru hanya untuk Praktik)
             let judulArabHTML = jenis === 'akademik' 
                 ? `<h2 class="arab">${judulArab} للمرحلة ${idt.tingkat_arab||'الثانوية'}</h2>`
                 : `<h2 class="arab" style="line-height:1.3; margin-bottom:4px;">${judulArab}<br>للمرحلة ${idt.tingkat_arab||'الثانوية'}</h2>`;
 
+            // Kondisi Judul Latin (Baris baru hanya untuk Praktik)
+            let judulLatinHTML = jenis === 'akademik'
+                ? `<h2 class="latin" style="font-size:16px;">${judulLatin} ${idt.madrasah||"-"}</h2>`
+                : `<h2 class="latin" style="font-size:16px; line-height:1.3; margin-bottom:4px;">${judulLatin}<br>${idt.madrasah||"-"}</h2>`;
             // CSS Khusus untuk memaksakan 1 Halaman saat dicetak
             let printStyle = `
                 <style>
