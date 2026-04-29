@@ -567,10 +567,11 @@
             <div class="section-panel panel-primary">
                 <h3>Mapel Akademik</h3>
                 <div class="sub-card">
-                    <p class="text-small text-muted">Import Mapel (Header Excel: <b>Latin, Arab</b>)</p>
-                    <input type="file" id="excel_mapel_akademik" accept=".xlsx, .xls" />
-                    <button class="btn-action" style="padding:5px 10px; font-size:12px; margin-top:4px;" onclick="importExcelMapel('akademik')">📥 Import</button>
-                </div>
+    			<p class="text-small text-muted">Import Mapel (Header Excel: <b>Latin, Arab</b>)</p>
+    			<button class="btn-excel" style="font-size:12px; padding:7px 10px; margin-bottom:8px;" onclick="downloadTemplateMapel()">📥 Download Template Mapel</button>
+    			<input type="file" id="excel_mapel_akademik" accept=".xlsx, .xls" />
+    			<button class="btn-action" style="padding:5px 10px; font-size:12px; margin-top:4px;" onclick="importExcelMapel('akademik')">📥 Import</button>
+				</div>
                 <div class="form-group"><input type="text" id="m_ak_latin" placeholder="Nama Mapel (Latin)"></div>
                 <div class="form-group"><input type="text" id="m_ak_arab" placeholder="Nama Mapel (Arab)" dir="rtl" class="arab"></div>
                 <button class="btn-action" onclick="tambahMapel('akademik')">➕ Tambah Manual</button>
@@ -591,11 +592,11 @@
                 </div>
 
                 <div class="sub-card">
-                    <p class="text-small text-muted">Import Sub-Mapel (Header Excel: <b>Latin, Arab</b>)</p>
-                    <input type="file" id="excel_mapel_praktik" accept=".xlsx, .xls" />
-                    <button class="btn-action" style="padding:5px 10px; font-size:12px; margin-top:4px;" onclick="importExcelMapel('praktik')">📥 Import</button>
-                </div>
-                
+    			<p class="text-small text-muted">Import Sub-Mapel (Header Excel: <b>Latin, Arab</b>)</p>
+    			<button class="btn-excel" style="font-size:12px; padding:7px 10px; margin-bottom:8px;" onclick="downloadTemplateMapel()">📥 Download Template Sub-Mapel</button>
+    			<input type="file" id="excel_mapel_praktik" accept=".xlsx, .xls" />
+    			<button class="btn-action" style="padding:5px 10px; font-size:12px; margin-top:4px;" onclick="importExcelMapel('praktik')">📥 Import</button>
+				</div>
                 <h4>2. Tambah Sub-Mapel Praktik</h4>
                 <div class="form-group" style="margin-bottom:10px;">
                     <select id="m_pr_kategori" style="background-color:var(--clr-accent-light); border-color:#e8d5b0;"></select>
@@ -635,12 +636,13 @@
                 </div>
             </div>
             <div class="section-panel panel-accent">
-                <h3>Import dari Excel</h3>
-                <p class="text-small text-muted">Header wajib: <b>NISN, NISM, Nama, Arab, JK</b></p>
-                <p class="text-small text-muted">*(Isi kolom JK dengan huruf <b>L</b> atau <b>P</b>)*</p>
-                <input type="file" id="excel_siswa" accept=".xlsx, .xls" style="margin-bottom:12px;" />
-                <button class="btn-save" onclick="importExcelSiswa()">📥 Import Siswa dari Excel</button>
-            </div>
+    		<h3>Import dari Excel</h3>
+    		<p class="text-small text-muted">Header wajib: <b>NISN, NISM, Nama, Arab, JK</b></p>
+    		<p class="text-small text-muted">*(Isi kolom JK dengan huruf <b>L</b> atau <b>P</b>)*</p>
+    		<button class="btn-excel" style="margin-bottom:12px;" onclick="downloadTemplateSiswa()">📥 Download Template Excel Siswa</button>
+    		<input type="file" id="excel_siswa" accept=".xlsx, .xls" style="margin-bottom:12px;" />
+   		 	<button class="btn-save" onclick="importExcelSiswa()">📥 Import Siswa dari Excel</button>
+			</div>
         </div>
         <div class="table-responsive" style="margin-top:18px;">
             <table class="data-table">
@@ -1314,6 +1316,33 @@
             let ws = XLSX.utils.aoa_to_sheet(dataArr); let wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Nilai"); XLSX.writeFile(wb, `Template_${jenis}.xlsx`);
         }
+		// --- FUNGSI DOWNLOAD TEMPLATE MAPEL ---
+function downloadTemplateMapel() {
+    let header = ['Latin', 'Arab'];
+    let dataArr = [header];
+    
+    // Menambahkan contoh data pada baris pertama agar user paham formatnya
+    dataArr.push(['Contoh Mapel', 'مثال']); 
+    
+    let ws = XLSX.utils.aoa_to_sheet(dataArr); 
+    let wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Template_Mapel"); 
+    XLSX.writeFile(wb, `Template_Import_Mapel.xlsx`);
+}
+
+// --- FUNGSI DOWNLOAD TEMPLATE DATA SISWA ---
+function downloadTemplateSiswa() {
+    let header = ['NISN', 'NISM', 'Nama', 'Arab', 'JK'];
+    let dataArr = [header];
+    
+    // Menambahkan contoh pengisian data
+    dataArr.push(['1234567890', '112233', 'Ahmad Fulan', 'أحمد فلان', 'L']); 
+    
+    let ws = XLSX.utils.aoa_to_sheet(dataArr); 
+    let wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Template_Siswa"); 
+    XLSX.writeFile(wb, `Template_Import_Siswa.xlsx`);
+}
 
         function importRekap(jenis) {
             let file = document.getElementById('excel_rekap_' + jenis).files[0];
