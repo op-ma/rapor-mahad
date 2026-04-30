@@ -1916,7 +1916,12 @@ function downloadTemplateSiswa() {
         function previewSemuaRapor() {
             let jenis = document.getElementById('c_jenis_rapor').value; let isGenap = document.getElementById('c_is_genap').checked;
             let kelasNaik = document.getElementById('c_kelas_naik').value; let kelasTinggal = document.getElementById('c_kelas_tinggal').value;
-            let isCetakTTD = document.getElementById('c_mode_cetak').value === 'ttd'; let maxRank = parseInt(document.getElementById('c_batas_peringkat').value) || 10;
+            let isCetakTTD = document.getElementById('c_mode_cetak').value === 'ttd'; 
+            
+            // PERBAIKAN BUG RANKING 0
+            let inputRank = parseInt(document.getElementById('c_batas_peringkat').value);
+            let maxRank = isNaN(inputRank) ? 10 : inputRank;
+
             let area = document.getElementById('print-area');
             if(db.siswa.length === 0) return alert("Data siswa masih kosong!");
             if(jenis === 'praktik' && db.mapel.praktik.length === 0) return alert("Data Mapel Praktik kosong!");
