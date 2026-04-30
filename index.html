@@ -733,7 +733,7 @@
                     </div>
                     <div>
                         <label>Batas Peringkat (Cetak)</label>
-                        <input type="number" id="c_batas_peringkat" value="10" min="1" style="padding:9px; border:1.5px solid var(--clr-border); border-radius:var(--radius-sm); width:100%;" onchange="previewRapor()">
+                        <input type="number" id="c_batas_peringkat" value="10" min="0" style="padding:9px; border:1.5px solid var(--clr-border); border-radius:var(--radius-sm); width:100%;" onchange="previewRapor()">
                     </div>
                 </div>
             </div>
@@ -1901,7 +1901,11 @@ function downloadTemplateSiswa() {
             let nisn = document.getElementById('c_pilih_siswa').value; let jenis = document.getElementById('c_jenis_rapor').value;
             let isGenap = document.getElementById('c_is_genap').checked; let kelasNaik = document.getElementById('c_kelas_naik').value;
             let kelasTinggal = document.getElementById('c_kelas_tinggal').value; let isCetakTTD = document.getElementById('c_mode_cetak').value === 'ttd';
-            let maxRank = parseInt(document.getElementById('c_batas_peringkat').value) || 10;
+            
+            // PERBAIKAN BUG RANKING 0
+            let inputRank = parseInt(document.getElementById('c_batas_peringkat').value);
+            let maxRank = isNaN(inputRank) ? 10 : inputRank; 
+
             let area = document.getElementById('print-area');
             if(!nisn) { area.innerHTML = "<div style='text-align:center; padding:60px 20px; color:var(--clr-text-faint);' class='latin'><div style='font-size:2rem; margin-bottom:10px;'>🖨️</div>Silakan pilih siswa atau klik Tampilkan Semua Siswa</div>"; return; }
             if(jenis === 'praktik' && db.mapel.praktik.length === 0) { area.innerHTML = "<div style='text-align:center; padding:50px; color:red;' class='latin'>Data Mapel Praktik kosong!</div>"; return; }
