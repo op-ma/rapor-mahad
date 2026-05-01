@@ -1659,48 +1659,45 @@ function downloadTemplateSiswa() {
                 ? `<h2 class="latin" style="font-size:16px;">${judulLatin} ${idt.madrasah||"-"}</h2>`
                 : `<h2 class="latin" style="font-size:16px; line-height:1.2; margin-bottom:4px;">${judulLatin}<br>${idt.madrasah||"-"}</h2>`;
 
-            // MEMBESARKAN PADDING, FONT, DAN MARGIN AGAR MENGISI HALAMAN
+            // MODERASI UKURAN: Tidak sekecil versi awal, tapi tidak selonggar versi sebelumnya
             let printStyle = `
                 <style>
                     @media print {
                         .rapor-page-container {
                             page-break-after: always;
                             page-break-inside: avoid;
-                            max-height: none !important; 
-                            overflow: visible !important;
+                            max-height: 287mm !important; /* Paksa kunci tinggi maksimal kertas A4 */
+                            overflow: hidden !important;  /* Cegah halaman 2 kosong */
                             width: 100%;
                         }
-                        /* Merenggangkan Tabel Nilai */
                         .tabel-nilai td, .tabel-nilai th { 
-                            padding: 4px 5px !important; 
-                            line-height: 1.25 !important; 
+                            padding: 3px 4px !important; 
+                            line-height: 1.15 !important; 
                         }
-                        /* Membesarkan Kop Surat */
-                        .kop-surat h2 { font-size: 18px !important; margin-bottom: 2px !important; }
-                        .kop-surat h3 { font-size: 14px !important; margin-bottom: 5px !important; }
-                        /* Merenggangkan Identitas */
-                        .tabel-identitas { margin-bottom: 8px !important; font-size: 13.5px !important; }
-                        .tabel-identitas td { padding: 3px 0 !important; }
-                        /* Mendorong Footer ke bawah */
-                        .footer-rapor { margin-top: 25px !important; }
-                        /* Memperbesar Ruang TTD */
-                        .ttd-box { min-height: 70px !important; height: 70px !important; }
+                        .kop-surat h2 { font-size: 17px !important; margin-bottom: 2px !important; }
+                        .kop-surat h3 { font-size: 13px !important; margin-bottom: 4px !important; }
+                        .tabel-identitas { margin-bottom: 6px !important; font-size: 13px !important; }
+                        .tabel-identitas td { padding: 1px 0 !important; }
+                        .footer-rapor { margin-top: 10px !important; }
+                        
+                        /* Ruang Tanda Tangan Sedang (60px) -> Proporsional */
+                        .ttd-box { min-height: 60px !important; height: 60px !important; }
                     }
-                    .ttd-box { height: 75px; min-height: 75px; }
+                    .ttd-box { height: 60px; min-height: 60px; }
                 </style>
             `;
 
             let html = printStyle + `
             <div class="rapor-page rapor-page-container" dir="rtl" style="text-align:right;">
                 <div class="rapor-body">
-                    <div class="kop-surat" style="margin-bottom: 8px;">
+                    <div class="kop-surat" style="margin-bottom: 5px;">
                         ${judulArabHTML}
                         <h3 class="arab">في العام الدراسي: ${tapelArab}</h3>
                         ${judulLatinHTML}
                         <h3 class="latin" style="font-size:13px;">Tahun Pelajaran ${tapelRaw}</h3>
                     </div>
 
-                    <table class="tabel-identitas" style="border:none; width:100%; direction:rtl; margin-bottom:10px; table-layout:fixed; font-size:13.5px;">
+                    <table class="tabel-identitas" style="border:none; width:100%; direction:rtl; margin-bottom:5px; table-layout:fixed; font-size:13px;">
                         <colgroup>
                             <col style="width:5%;">
                             <col style="width:15%;">
@@ -1787,39 +1784,39 @@ function downloadTemplateSiswa() {
                 html += `
                         <tfoot>
                             <tr>
-                                <td colspan="3" class="text-right arab" style="padding:4px 5px;">مجموع الدرجات / <span class="latin">Jumlah Nilai</span></td>
+                                <td colspan="3" class="text-right arab" style="padding:3px 5px;">مجموع الدرجات / <span class="latin">Jumlah Nilai</span></td>
                                 <td class="latin" style="text-align:center;"><b>${k.total}</b></td><td colspan="2" class="arab" style="text-align:right !important; padding-right: 8px !important;">${terbilangArab(k.total)}</td>
                             </tr>
                             <tr>
-                                <td colspan="3" class="text-right arab" style="padding:4px 5px;">النسبة المئوية / <span class="latin">Nilai Rata-Rata</span></td>
+                                <td colspan="3" class="text-right arab" style="padding:3px 5px;">النسبة المئوية / <span class="latin">Nilai Rata-Rata</span></td>
                                 <td class="latin" style="text-align:center;"><b>${k.rata}</b></td><td colspan="2" class="arab" style="text-align:right !important; padding-right: 8px !important;">${terbilangArab(k.rata)}</td>
                             </tr>
                             <tr>
-                                <td colspan="3" class="text-right arab" style="padding:4px 5px;">الترتيب / <span class="latin">Ranking</span></td>
+                                <td colspan="3" class="text-right arab" style="padding:3px 5px;">الترتيب / <span class="latin">Ranking</span></td>
                                 <td class="latin" style="text-align:center;"><b>${displayRank}</b></td><td colspan="2" class="arab" style="text-align:center;">الملاحظة / <span class="latin">Catatan</span></td>
                             </tr>
                             <tr>
-                                <td colspan="3" class="text-right arab" style="padding:4px 5px;">التقدير / <span class="latin">Predikat</span></td>
+                                <td colspan="3" class="text-right arab" style="padding:3px 5px;">التقدير / <span class="latin">Predikat</span></td>
                                 <td class="${isRasib ? 'huruf-merah':''} arab" style="text-align:center;"><b>${k.predikat}</b></td>
                                 <td colspan="2" rowspan="6" class="latin catatan-wali" style="vertical-align:top; direction:ltr; padding:6px 8px; white-space: pre-wrap; text-align: justify; text-justify: inter-word;">${abs.catatan||""}</td>
                             </tr>
                             <tr>
-                                <td colspan="3" class="text-right arab" style="padding:4px 5px;">السلوك / <span class="latin">Kepribadian</span></td>
+                                <td colspan="3" class="text-right arab" style="padding:3px 5px;">السلوك / <span class="latin">Kepribadian</span></td>
                                 <td class="latin" style="text-align:center;"><b>${abs.sikap||"-"}</b></td>
                             </tr>
                             <tr>
-                                <td colspan="4" class="arab" style="text-align:center; background-color:#f9f9f9; padding:4px;">عدد الغياب في اليوم / <span class="latin">Jumlah Absensi per-hari</span></td>
+                                <td colspan="4" class="arab" style="text-align:center; background-color:#f9f9f9; padding:3px;">عدد الغياب في اليوم / <span class="latin">Jumlah Absensi per-hari</span></td>
                             </tr>
                             <tr>
-                                <td colspan="3" class="text-right arab" style="padding:4px 5px;">غياب / <span class="latin">Alpa</span></td>
+                                <td colspan="3" class="text-right arab" style="padding:3px 5px;">غياب / <span class="latin">Alpa</span></td>
                                 <td class="latin" style="text-align:center;">${abs.alfa||0}</td>
                             </tr>
                             <tr>
-                                <td colspan="3" class="text-right arab" style="padding:4px 5px;">إذن / <span class="latin">Izin</span></td>
+                                <td colspan="3" class="text-right arab" style="padding:3px 5px;">إذن / <span class="latin">Izin</span></td>
                                 <td class="latin" style="text-align:center;">${abs.izin||0}</td>
                             </tr>
                             <tr>
-                                <td colspan="3" class="text-right arab" style="padding:4px 5px;">مريض / <span class="latin">Sakit</span></td>
+                                <td colspan="3" class="text-right arab" style="padding:3px 5px;">مريض / <span class="latin">Sakit</span></td>
                                 <td class="latin" style="text-align:center;">${abs.sakit||0}</td>
                             </tr>
                         </tfoot>`;
@@ -1832,9 +1829,9 @@ function downloadTemplateSiswa() {
             html += `       <div style="width:48%; text-align:right;">
                                 <table style="border:none; margin:0 0 5px 0; padding:0; direction:rtl; text-align:right; font-size:12.5px; float:right;">
                                     <tr>
-                                        <td class="arab" style="border:none; padding:0 0 4px 5px;">سلم الكشف في</td>
-                                        <td style="border:none; padding:0 5px 4px 5px;">:</td>
-                                        <td style="border:none; padding:0 0 4px 0; text-align:right;"><div class="latin" dir="ltr" style="display:inline-block;">${idt.tempat || ''}</div></td>
+                                        <td class="arab" style="border:none; padding:0 0 2px 5px;">سلم الكشف في</td>
+                                        <td style="border:none; padding:0 5px 2px 5px;">:</td>
+                                        <td style="border:none; padding:0 0 2px 0; text-align:right;"><div class="latin" dir="ltr" style="display:inline-block;">${idt.tempat || ''}</div></td>
                                     </tr>
                                     <tr>
                                         <td class="arab" style="border:none; padding:0 0 0 5px; vertical-align:top;">التاريخ</td>
@@ -1858,20 +1855,20 @@ function downloadTemplateSiswa() {
                 if(tampilkanLulus) { tTinggal = `<span style="text-decoration:line-through;">${tTinggal}</span>`; } 
                 else { tNaik = `<span style="text-decoration:line-through;">${tNaik}</span>`; tTinggal = `<span class="huruf-merah">${tTinggal}</span>`; }
                 
-                html += `       <div style="border:1px solid #000; padding:5px 8px; font-size:11.5px; box-sizing:border-box;">
-                                    <table class="arab" dir="rtl" style="width:100%; border:none; margin-bottom:2px; font-size:12.5px; line-height:1.2;">
+                html += `       <div style="border:1px solid #000; padding:4px 6px; font-size:11.5px; box-sizing:border-box;">
+                                    <table class="arab" dir="rtl" style="width:100%; border:none; margin-bottom:2px; font-size:12px; line-height:1.2;">
                                         <tr>
                                             <td style="vertical-align:top; border:none; padding:0; width:50px; text-align:right;">التقرير</td>
                                             <td style="vertical-align:top; border:none; padding:0; width:10px; text-align:center;">:</td>
                                             <td style="border:none; padding:0; text-align:right;">
                                                 اعتمادا على الدرجات السابقة تقرر بأن
-                                                <div style="margin-top:2px;">${teksGender} &nbsp;:&nbsp; ${teksLulus}</div>
+                                                <div style="margin-top:1px;">${teksGender} &nbsp;:&nbsp; ${teksLulus}</div>
                                             </td>
                                         </tr>
                                     </table>
-                                    <table style="width:100%; border:none; line-height:1.2; font-size:11.5px;">
+                                    <table style="width:100%; border:none; line-height:1.15; font-size:11px;">
                                         <tr>
-                                            <td style="vertical-align:top; border:none; padding:0; width:70px;">Keputusan :</td>
+                                            <td style="vertical-align:top; border:none; padding:0; width:65px;">Keputusan :</td>
                                             <td style="border:none; padding:0;">Dengan memperhatikan nilai yang dicapai, maka santri ini ditetapkan :<br>${tNaik}<br>${tTinggal}</td>
                                         </tr>
                                     </table>
@@ -1885,7 +1882,7 @@ function downloadTemplateSiswa() {
             let labelKepsek = `بمعرفة مدير المرحلة ${idt.tingkat_arab || 'الثانوية'}`;
 
             if (isCetakTTD) {
-                html += `   <div style="margin-top:10px; padding-bottom:5px;">
+                html += `   <div style="margin-top:5px; padding-bottom:5px;">
                             <table style="width:100%; border:none; text-align:center; font-size:14px; direction:rtl; table-layout:fixed;">
                                 <tr>
                                     <td style="width:33%; vertical-align:bottom;">
