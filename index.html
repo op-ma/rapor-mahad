@@ -368,18 +368,20 @@
         .huruf-merah { color: red !important; font-weight: normal !important; }
 
         /* --- PRINT MEDIA --- */
+        /* --- PRINT MEDIA --- */
         @media print {
-            @page { size: A4; margin: 10mm; }
-            body { background-color: white; padding: 0; margin: 0; width: 100%; }
+            @page { size: A4; margin: 5mm; } /* Margin diperkecil agar ruang lebih luas */
+            body { background-color: white; padding: 0; margin: 0; width: 100%; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .no-print { display: none !important; }
-            .app-header { display: none !important; }
-            .backup-bar { display: none !important; }
+            .app-header, .backup-bar { display: none !important; }
             .app-body { padding: 0 !important; }
             .tab-content { display: none !important; box-shadow: none; padding: 0; }
             #tab-cetak { display: block !important; width: 100% !important; }
-            .header-hijau { -webkit-print-color-adjust: exact; background-color: #92d050 !important; }
-            .header-kuning { -webkit-print-color-adjust: exact; background-color: #ffc000 !important; }
-            .huruf-merah { -webkit-print-color-adjust: exact; color: red !important; }
+            
+            .header-hijau { background-color: #92d050 !important; }
+            .header-kuning { background-color: #ffc000 !important; }
+            .huruf-merah { color: red !important; }
+            
             .print-container { max-width: none !important; width: 100% !important; margin: 0 !important; }
             
             .rapor-page {
@@ -389,30 +391,37 @@
                 page-break-after: always !important;
                 page-break-inside: avoid !important;
                 width: 100% !important;
-                height: 277mm !important;
-                max-height: 277mm !important;
+                height: auto !important;
+                max-height: 287mm !important; /* Batas tinggi A4 dikurangi margin */
                 margin: 0 auto !important;
                 padding: 0 !important;
                 display: block !important;
                 box-sizing: border-box;
                 overflow: hidden !important;
             }
-			
-			.rapor-page:last-child {
-                page-break-after: auto !important; /* Mencegah halaman kosong di akhir */
+            
+            .rapor-page:last-child {
+                page-break-after: auto !important;
             }
             
             .rapor-body { display: block; }
-            /* ... sisa kode print ... */
-        }
-            .rapor-body { display: block; }
             .tabel-wrapper { display: block; }
-            .footer-rapor { margin-top: 15px !important; padding-top: 5px; }
-            .tabel-nilai th, .tabel-nilai td { padding: 3px 2px !important; line-height: 1.1; }
+            .footer-rapor { margin-top: 5px !important; padding-top: 2px; page-break-inside: avoid; }
+            
+            /* Memadatkan Tabel & Identitas saat Cetak */
+            .tabel-nilai th, .tabel-nilai td { padding: 2px !important; line-height: 1.1; }
             .tabel-identitas td { padding: 1px 0 !important; }
-            .ttd-box { height: 45px !important; }
+            
+            /* Penyesuaian Font Global saat Cetak */
+            .rapor-page .latin { font-size: 11px !important; }
+            .rapor-page .arab { font-size: 13px !important; }
+            .rapor-page h2.arab { font-size: 16px !important; margin-bottom: 2px; }
+            .rapor-page h3.arab { font-size: 14px !important; margin-bottom: 2px; }
+            .rapor-page h2.latin { font-size: 14px !important; margin-bottom: 2px; }
+            .rapor-page h3.latin { font-size: 12px !important; margin-bottom: 2px; }
+            
+            .ttd-box { height: 40px !important; min-height: 40px !important; }
         }
-        .ttd-box { height: 60px; }
 
         /* --- MODAL --- */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(20,40,25,0.55); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
