@@ -1659,29 +1659,33 @@ function downloadTemplateSiswa() {
                 ? `<h2 class="latin" style="font-size:16px;">${judulLatin} ${idt.madrasah||"-"}</h2>`
                 : `<h2 class="latin" style="font-size:16px; line-height:1.2; margin-bottom:4px;">${judulLatin}<br>${idt.madrasah||"-"}</h2>`;
 
-            // MODERASI UKURAN: Tidak sekecil versi awal, tapi tidak selonggar versi sebelumnya
+            // KOMPROMI UKURAN: Menekan tabel & margin atas, memberi napas di bagian bawah
             let printStyle = `
                 <style>
                     @media print {
                         .rapor-page-container {
                             page-break-after: always;
                             page-break-inside: avoid;
-                            max-height: 287mm !important; /* Paksa kunci tinggi maksimal kertas A4 */
-                            overflow: hidden !important;  /* Cegah halaman 2 kosong */
+                            max-height: 287mm !important; 
+                            overflow: hidden !important; 
                             width: 100%;
+                            padding-bottom: 5px !important; /* Mencegah nama menyentuh border tak terlihat */
                         }
                         .tabel-nilai td, .tabel-nilai th { 
-                            padding: 3px 4px !important; 
-                            line-height: 1.15 !important; 
+                            padding: 2px 3px !important; 
+                            line-height: 1.1 !important; 
                         }
-                        .kop-surat h2 { font-size: 17px !important; margin-bottom: 2px !important; }
-                        .kop-surat h3 { font-size: 13px !important; margin-bottom: 4px !important; }
-                        .tabel-identitas { margin-bottom: 6px !important; font-size: 13px !important; }
-                        .tabel-identitas td { padding: 1px 0 !important; }
-                        .footer-rapor { margin-top: 10px !important; }
+                        .kop-surat { margin-bottom: 3px !important; }
+                        .kop-surat h2 { font-size: 16px !important; margin-bottom: 2px !important; }
+                        .kop-surat h3 { font-size: 13px !important; margin-bottom: 2px !important; }
                         
-                        /* Ruang Tanda Tangan Sedang (60px) -> Proporsional */
-                        .ttd-box { min-height: 60px !important; height: 60px !important; }
+                        .tabel-identitas { margin-bottom: 4px !important; font-size: 13px !important; }
+                        .tabel-identitas td { padding: 1px 0 !important; }
+                        
+                        .footer-rapor { margin-top: 6px !important; }
+                        
+                        /* Ruang TTD Optimal (55px) -> Lebih lega tapi tak sampai menabrak overflow */
+                        .ttd-box { min-height: 55px !important; height: 55px !important; }
                     }
                     .ttd-box { height: 60px; min-height: 60px; }
                 </style>
@@ -1690,14 +1694,14 @@ function downloadTemplateSiswa() {
             let html = printStyle + `
             <div class="rapor-page rapor-page-container" dir="rtl" style="text-align:right;">
                 <div class="rapor-body">
-                    <div class="kop-surat" style="margin-bottom: 5px;">
+                    <div class="kop-surat">
                         ${judulArabHTML}
                         <h3 class="arab">في العام الدراسي: ${tapelArab}</h3>
                         ${judulLatinHTML}
                         <h3 class="latin" style="font-size:13px;">Tahun Pelajaran ${tapelRaw}</h3>
                     </div>
 
-                    <table class="tabel-identitas" style="border:none; width:100%; direction:rtl; margin-bottom:5px; table-layout:fixed; font-size:13px;">
+                    <table class="tabel-identitas" style="border:none; width:100%; direction:rtl; table-layout:fixed; font-size:13px;">
                         <colgroup>
                             <col style="width:5%;">
                             <col style="width:15%;">
