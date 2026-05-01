@@ -2023,6 +2023,58 @@ function downloadTemplateSiswa() {
         //     return false;
         // }
     });
+
+	// --- FITUR COPY-PASTE DARI EXCEL KE TABEL NILAI ---
+        document.addEventListener('paste', function(e) {
+            // Cek apakah yang dipaste berada di dalam input nilai tabel
+            if (e.target && e.target.classList.contains('input-tabel')) {
+                e.preventDefault(); // Hentikan paste default (agar tidak semua masuk ke 1 kotak)
+                
+                // Ambil data teks dari clipboard
+                let pasteData = (e.clipboardData || window.clipboardData).getData('text');
+                
+                // Pecah data berdasarkan baris baru (Excel memisahkan baris dengan Enter/Newline)
+                let rows = pasteData.split(/\r\n|\n|\r/);
+                
+                let currentTd = e.target.closest('td');
+                let currentTr = currentTd.closest('tr');
+                
+                // Cari posisi index kolom dari tempat paste pertama kali
+                let startColIndex = Array.from(currentTr.children).indexOf(currentTd);
+                let currentRow = currentTr;
+                
+                for (let i = 0; i < rows.length; i++) {
+                    // Abaikan baris kosong di bagian paling akhir (biasanya bawaan Excel)
+                    if (rows[i] === "" && i === rows.length - 1) break;
+                    
+                    if (currentRow) {
+                        // Pecah data berdasarkan Tab (jika pengguna menyalin beberapa kolom sekaligus)
+                        let cols = rows[i].split('\t');
+                        
+                        for (let j = 0; j < cols.length; j++) {
+                            let targetTd = currentRow.children[startColIndex + j];
+                            if (targetTd) {
+                                let targetInput = targetTd.querySelector('input.input-tabel');
+                                if (targetInput) {
+                                    // Isi kotak dengan nilai dari Excel
+                                    targetInput.value = cols[j].trim();
+                                    
+                                    // Picu event 'input' secara paksa agar nilai otomatis tersimpan ke memori
+                                    let event = new Event('input', { bubbles: true });
+                                    targetInput.dispatchEvent(event);
+                                }
+                            }
+                        }
+                        // Geser ke baris (tr) di bawahnya untuk paste angka berikutnya
+                        currentRow = currentRow.nextElementSibling;
+                    } else {
+                        break; // Berhenti jika baris tabel sudah habis
+                    }
+                }
+                
+                showToast('✅ Paste nilai dari Excel berhasil!');
+            }
+        });	
 </script>
 	
 </body>
