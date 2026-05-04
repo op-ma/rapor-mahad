@@ -367,8 +367,7 @@
 
         .huruf-merah { color: red !important; font-weight: normal !important; }
 
-        /* --- PRINT MEDIA --- */
-        /* --- PRINT MEDIA --- */
+             /* --- PRINT MEDIA --- */
         @media print {
             @page { size: A4; margin: 5mm; } /* Margin diperkecil agar ruang lebih luas */
             body { background-color: white; padding: 0; margin: 0; width: 100%; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -1656,7 +1655,8 @@ function downloadTemplateSiswa() {
                         <td class="latin" style="text-align:center;">${rataKelas}</td>
                     </tr>`; no++;
                 });
-            } else {
+            } 
+			else {
                 let groupNo = 1;
                 db.kategori_praktik.forEach(kat => {
                     let items = db.mapel.praktik.filter(m => m.kategori === kat.id);
@@ -1825,12 +1825,12 @@ function downloadTemplateSiswa() {
             } else {
                 html += `
                         <colgroup>
-                            <col style="width:5%;">
-                            <col style="width:25%;">
-                            <col style="width:15%;">
-                            <col style="width:12%;">
-                            <col style="width:5%;">
-                            <col style="width:25%;">
+                            <col style="width:4%;">  <!-- Nomor -->
+                            <col style="width:20%;"> <!-- Kategori Utama -->
+                            <col style="width:23%;"> <!-- Sub Mapel Arab (Diperlebar) -->
+                            <col style="width:25%;"> <!-- Sub Mapel Latin (Diperlebar) -->
+                            <col style="width:8%;">  <!-- Nilai Angka -->
+                            <col style="width:20%;"> <!-- Nilai Huruf (Diperkecil) -->
                         </colgroup>
                         <thead class="header-kuning arab">
                             <tr>
