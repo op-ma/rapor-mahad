@@ -939,6 +939,24 @@
             document.getElementById('kat_pr_latin').value = ""; document.getElementById('kat_pr_arab').value = "";
             saveData(); renderKategoriPraktik(); showToast('✅ Kategori ditambahkan.');
         }
+		function editKategoriPraktik(idKat) {
+            let kat = db.kategori_praktik.find(k => k.id === idKat);
+            if (!kat) return;
+
+            let latinBaru = prompt("✏️ Edit Nama Kategori (Latin):", kat.latin);
+            if (latinBaru === null || latinBaru.trim() === "") return;
+
+            let arabBaru = prompt("✏️ Edit Nama Kategori (Arab):", kat.arab);
+            if (arabBaru === null) return;
+
+            kat.latin = latinBaru;
+            kat.arab = arabBaru;
+
+            saveData(); 
+            renderKategoriPraktik();
+            hitungDanRenderRekap('praktik'); // Update tabel nilai
+            showToast('✅ Kategori Praktik berhasil diperbarui!');
+        }
         
         function hapusKategoriPraktik(idKat) {
             let adaMapel = db.mapel.praktik.find(m => m.kategori === idKat);
@@ -954,15 +972,17 @@
             let select = document.getElementById('m_pr_kategori');
             list.innerHTML = ""; select.innerHTML = "";
             db.kategori_praktik.forEach((k, idx) => {
-                list.innerHTML += `<div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding:3px 0;">
+                list.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding:4px 0;">
                     <span>${idx+1}. ${k.latin} / <span class="arab">${k.arab}</span></span>
-                    <button class="btn-danger" style="padding:2px 6px; font-size:10px;" onclick="hapusKategoriPraktik('${k.id}')">×</button>
+                    <div style="white-space:nowrap;">
+                        <button class="btn-edit" style="padding:2px 6px; font-size:10px; margin-right:4px;" onclick="editKategoriPraktik('${k.id}')">✏️ Edit</button>
+                        <button class="btn-danger" style="padding:2px 6px; font-size:10px;" onclick="hapusKategoriPraktik('${k.id}')">×</button>
+                    </div>
                 </div>`;
                 select.innerHTML += `<option value="${k.id}">${idx+1}. ${k.latin}</option>`;
             });
             renderMapel();
         }
-
         function cetakLayarOtomatis() {
             let nisn = document.getElementById('c_pilih_siswa').value;
             let idt = db.identitas || {};
@@ -1061,6 +1081,26 @@
         function hapusMapel(jenis, idMapel) {
             if(confirm("Hapus mapel ini?")) { db.mapel[jenis] = db.mapel[jenis].filter(m => m.id !== idMapel); saveData(); renderMapel(); }
         }
+		
+		function editNamaMapel(jenis, idMapel) {
+            let mapel = db.mapel[jenis].find(m => m.id === idMapel);
+            if (!mapel) return;
+
+            let latinBaru = prompt("✏️ Edit Nama Mapel (Latin):", mapel.latin);
+            if (latinBaru === null) return; // Dibatalkan
+
+            let arabBaru = prompt("✏️ Edit Nama Mapel (Arab):", mapel.arab);
+            if (arabBaru === null) return; // Dibatalkan
+
+            mapel.latin = latinBaru;
+            mapel.arab = arabBaru;
+
+            saveData(); 
+            renderMapel();
+            hitungDanRenderRekap('akademik'); 
+            hitungDanRenderRekap('praktik');
+            showToast('✅ Nama Mapel berhasil diperbarui!');
+        }
 
         function geserMapelAkademik(idx, arah) {
             if (idx + arah < 0 || idx + arah >= db.mapel.akademik.length) return;
@@ -1106,6 +1146,7 @@
                     <td style="white-space:nowrap;">
                         <button class="btn-geser" onclick="geserMapelAkademik(${idx}, -1)">⬆️</button>
                         <button class="btn-geser" onclick="geserMapelAkademik(${idx}, 1)">⬇️</button>
+                        <button class="btn-edit" style="margin-left:4px; font-size:11.5px; padding:5px 8px;" onclick="editNamaMapel('akademik', '${m.id}')">✏️ Edit</button>
                         <button class="btn-danger" style="margin-left:4px;" onclick="hapusMapel('akademik','${m.id}')">×</button>
                     </td></tr>`;
                 selAk.innerHTML += `<option value="${m.id}">${m.latin}</option>`;
@@ -1120,7 +1161,11 @@
                     let catSelect = `<select style="padding:4px; font-size:12px; width:100%; border:1px solid var(--clr-border); border-radius:4px;" onchange="updateKategoriSubMapel('${m.id}', this.value)">`;
                     db.kategori_praktik.forEach(k => { catSelect += `<option value="${k.id}" ${m.kategori===k.id?'selected':''}>${k.latin}</option>`; });
                     catSelect += `</select>`;
-                    tbodyPr.innerHTML += `<tr><td>${counter++}</td><td>${catSelect}</td><td style="text-align:left;">${m.latin}</td><td class="arab" dir="rtl">${m.arab}</td><td><button class="btn-danger" onclick="hapusMapel('praktik','${m.id}')">×</button></td></tr>`;
+                    tbodyPr.innerHTML += `<tr><td>${counter++}</td><td>${catSelect}</td><td style="text-align:left;">${m.latin}</td><td class="arab" dir="rtl">${m.arab}</td>
+                    <td style="white-space:nowrap;">
+                        <button class="btn-edit" style="font-size:11.5px; padding:5px 8px;" onclick="editNamaMapel('praktik', '${m.id}')">✏️ Edit</button>
+                        <button class="btn-danger" style="margin-left:4px;" onclick="hapusMapel('praktik','${m.id}')">×</button>
+                    </td></tr>`;
                     selPr.innerHTML += `<option value="${m.id}">[${kat.latin}] ${m.latin}</option>`;
                 });
             });
@@ -1129,7 +1174,11 @@
                 let catSelect = `<select style="padding:4px; font-size:12px; width:100%; border:1px solid var(--clr-border); border-radius:4px;" onchange="updateKategoriSubMapel('${m.id}', this.value)"><option value="">- Belum Ditentukan -</option>`;
                 db.kategori_praktik.forEach(k => { catSelect += `<option value="${k.id}">${k.latin}</option>`; });
                 catSelect += `</select>`;
-                tbodyPr.innerHTML += `<tr style="background:var(--clr-danger-light);"><td>${counter++}</td><td>${catSelect}</td><td style="text-align:left;">${m.latin}</td><td class="arab" dir="rtl">${m.arab}</td><td><button class="btn-danger" onclick="hapusMapel('praktik','${m.id}')">×</button></td></tr>`;
+                tbodyPr.innerHTML += `<tr style="background:var(--clr-danger-light);"><td>${counter++}</td><td>${catSelect}</td><td style="text-align:left;">${m.latin}</td><td class="arab" dir="rtl">${m.arab}</td>
+                <td style="white-space:nowrap;">
+                    <button class="btn-edit" style="font-size:11.5px; padding:5px 8px;" onclick="editNamaMapel('praktik', '${m.id}')">✏️ Edit</button>
+                    <button class="btn-danger" style="margin-left:4px;" onclick="hapusMapel('praktik','${m.id}')">×</button>
+                </td></tr>`;
                 selPr.innerHTML += `<option value="${m.id}">[Unassigned] ${m.latin}</option>`;
             });
             hitungDanRenderRekap('akademik'); hitungDanRenderRekap('praktik');
@@ -1648,16 +1697,30 @@ function downloadTemplateSiswa() {
                 : `<span style="text-decoration:line-through;">${tLulusCore}</span> / <b class="huruf-merah">${tGagalCore}</b>`;
             let tapelRaw = idt.tapel || "-";
             let tapelArab = toArabicNum(tapelRaw).replace(/H/ig, 'هـ').replace(/M/ig, 'م');
-            let judulArab = jenis === 'akademik' ? 'كشف الدرجات' : 'كشف الدرجات الإضافية'; 
-            let judulLatin = jenis === 'akademik' ? 'Laporan Hasil Belajar Santri Madrasah' : 'Laporan Hasil Ujian Lisan & Ekstrakurikuler Santri';
 
-            let judulArabHTML = jenis === 'akademik' 
-                ? `<h2 class="arab">${judulArab} للمرحلة ${idt.tingkat_arab||'الثانوية'}</h2>`
-                : `<h2 class="arab" style="line-height:1.2; margin-bottom:4px;">${judulArab}<br>للمرحلة ${idt.tingkat_arab||'الثانوية'}</h2>`;
+            // --- DETEKSI KELAS AKHIR (3, 9, 12) ---
+            let klsCekHeader = (idt.kelas || "").toUpperCase();
+            let isKelas3 = klsCekHeader.includes("3") || klsCekHeader.includes("III") || klsCekHeader.includes("IX") || klsCekHeader.includes("XII") || klsCekHeader.includes("الثالث");
 
-            let judulLatinHTML = jenis === 'akademik'
-                ? `<h2 class="latin" style="font-size:16px;">${judulLatin} ${idt.madrasah||"-"}</h2>`
-                : `<h2 class="latin" style="font-size:16px; line-height:1.2; margin-bottom:4px;">${judulLatin}<br>${idt.madrasah||"-"}</h2>`;
+            // --- KONDISI JUDUL ARAB (DIBUAT SEJAJAR SEMUA) ---
+            let judulArab = 'كشف الدرجات';
+            if (jenis === 'praktik') {
+                // Jika kelas 3, terjemahan Arabnya menjadi Ujian Praktik. Jika bukan, Ekstrakurikuler/Tambahan
+                judulArab = isKelas3 ? 'كشف درجات الامتحان العملي' : 'كشف الدرجات الإضافية';
+            }
+            let judulArabHTML = `<h2 class="arab" style="margin-bottom:4px;">${judulArab} للمرحلة ${idt.tingkat_arab||'الثانوية'}</h2>`;
+
+            // --- KONDISI JUDUL LATIN (KOP SURAT) ---
+            let judulLatinHTML = "";
+            if (jenis === 'akademik') {
+                judulLatinHTML = `<h2 class="latin" style="font-size:16px;">Laporan Hasil Belajar Santri Madrasah ${idt.madrasah||"-"}</h2>`;
+            } else {
+                if (isKelas3) {
+                    judulLatinHTML = `<h2 class="latin" style="font-size:16px;">Laporan Hasil Ujian Praktik Santri Madrasah ${idt.madrasah||"-"}</h2>`;
+                } else {
+                    judulLatinHTML = `<h2 class="latin" style="font-size:16px;">Laporan Hasil Ujian Lisan & Ekstrakurikuler Santri Madrasah ${idt.madrasah||"-"}</h2>`;
+                }
+            }
 
             // KOMPROMI UKURAN: Menekan tabel & margin atas, memberi napas di bagian bawah
             let printStyle = `
