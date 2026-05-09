@@ -1944,7 +1944,55 @@ function downloadTemplateSiswa() {
             html += `       </div>
                         </div>`;
 
-            let namaKepala = idt.kepala ? idt.kepala : ''; l
+            let namaKepala = idt.kepala ? idt.kepala : ''; let namaWali = idt.wali ? idt.wali : '';
+            let labelWaliKelas = idt.jk_wali === 'P' ? 'ولية الفصل،' : 'ولي الفصل،'; let labelWaliSiswa = siswa.jk === 'P' ? 'ولي الطالبة' : 'ولي الطالب';
+            let labelKepsek = `بمعرفة مدير المرحلة ${idt.tingkat_arab || 'الثانوية'}`;
+
+            if (isCetakTTD) {
+                html += `   <div style="margin-top:10px; padding-bottom:10px;">
+                            <table style="width:100%; border:none; text-align:center; font-size:14px; direction:rtl; table-layout:fixed;">
+                                <tr>`;
+                
+                if (jenis === 'akademik') {
+                    // --- TTD RAPOR AKADEMIK (3 Kolom Tetap) ---
+                    html += `
+                                    <td style="width:33%; vertical-align:bottom;">
+                                        <div class="arab">${labelWaliKelas}</div>
+                                        <div class="ttd-box">&nbsp;</div>
+                                        <div class="arab" style="font-size:15px; font-weight:bold;">${namaWali}</div>
+                                    </td>
+                                    <td style="width:34%; vertical-align:bottom;">
+                                        <div class="arab">${labelWaliSiswa}</div>
+                                        <div class="ttd-box">&nbsp;</div>
+                                        <div class="arab" style="font-size:15px;">.............................</div>
+                                    </td>
+                                    <td style="width:33%; vertical-align:bottom;">
+                                        <div class="arab">${labelKepsek}</div>
+                                        <div class="ttd-box">&nbsp;</div>
+                                        <div class="arab" style="font-size:15px; font-weight:bold;">${namaKepala}</div>
+                                    </td>`;
+                } else {
+                    // --- TTD RAPOR PRAKTIK (2 Kolom: Wali Kelas di Kanan, Wali Santri di Kiri) ---
+                    html += `
+                                    <td style="width:50%; vertical-align:bottom;">
+                                        <div class="arab">${labelWaliKelas}</div>
+                                        <div class="ttd-box">&nbsp;</div>
+                                        <div class="arab" style="font-size:15px; font-weight:bold;">${namaWali}</div>
+                                    </td>
+                                    <td style="width:50%; vertical-align:bottom;">
+                                        <div class="arab">${labelWaliSiswa}</div>
+                                        <div class="ttd-box">&nbsp;</div>
+                                        <div class="arab" style="font-size:15px;">.............................</div>
+                                    </td>`;
+                }
+
+                html += `       </tr>
+                            </table>
+                        </div>`;
+            }
+            
+            html += ` </div> </div>`;
+            return html;
 
         function previewRapor() {
             let nisn = document.getElementById('c_pilih_siswa').value; let jenis = document.getElementById('c_jenis_rapor').value;
