@@ -984,18 +984,20 @@
         }
         function cetakLayarOtomatis() {
             let nisn = document.getElementById('c_pilih_siswa').value;
+            let idt = db.identitas || {};
+            let kelas = idt.kelas ? idt.kelas.replace(/[/\\?%*:|"<>]/g, '-') : "Kelas";
             let originalTitle = document.title;
             let fileName = "Rapor";
             
-            // Tentukan teks jenis rapor
+            // Ambil jenis rapor untuk menentukan prefix nama file
             let jenis = document.getElementById('c_jenis_rapor').value;
-            let jenisTeks = jenis === 'akademik' ? 'RAPOR AKADEMIK' : 'RAPOR PRAKTIK';
+            let prefix = jenis === 'akademik' ? 'RA' : 'RP';
 
             if (nisn) { 
                 let siswa = db.siswa.find(s => s.nisn === nisn); 
-                if (siswa) fileName = `${jenisTeks} ${siswa.nama}`; 
+                if (siswa) fileName = `${prefix}-${siswa.nisn}-${siswa.nama}-${kelas}`; 
             } else { 
-                fileName = `${jenisTeks} SEMUA SISWA`; 
+                fileName = `${prefix}-Semua_Siswa-${kelas}`; 
             }
 
             document.title = fileName.replace(/[/\\?%*:|"<>]/g, '');
@@ -2036,22 +2038,26 @@ function downloadTemplateSiswa() {
 		
 		function simpanPDF() {
             let nisn = document.getElementById('c_pilih_siswa').value;
+            let idt = db.identitas || {};
+            
+            // Ambil data kelas dan bersihkan karakter yang tidak bisa jadi nama file
+            let kelas = idt.kelas ? idt.kelas.replace(/[/\\?%*:|"<>]/g, '-') : "Kelas";
             let originalTitle = document.title;
             let fileName = "Rapor";
 
-            // Tentukan teks jenis rapor
+            // Ambil jenis rapor untuk menentukan prefix nama file
             let jenis = document.getElementById('c_jenis_rapor').value;
-            let jenisTeks = jenis === 'akademik' ? 'RAPOR AKADEMIK' : 'RAPOR PRAKTIK';
+            let prefix = jenis === 'akademik' ? 'RA' : 'RP';
 
             if (nisn) {
                 let siswa = db.siswa.find(s => s.nisn === nisn);
                 if (siswa) {
-                    // Format penamaan otomatis: RAPOR AKADEMIK/PRAKTIK NAMA SANTRI
-                    fileName = `${jenisTeks} ${siswa.nama}`;
+                    // Format penamaan otomatis: PREFIX-NISN-NAMA SISWA-KELAS
+                    fileName = `${prefix}-${siswa.nisn}-${siswa.nama}-${kelas}`;
                 }
             } else {
                 // Jika sedang preview semua siswa
-                fileName = `${jenisTeks} SEMUA SISWA`;
+                fileName = `${prefix}-Semua_Siswa-${kelas}`;
             }
 
             // Bersihkan kembali nama file final dari karakter ilegal
