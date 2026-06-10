@@ -2121,7 +2121,7 @@ function hitungDanRenderRekap(jenis) {
         let filled = vals.filter(x => x!==null);
         let total  = filled.reduce((a,b) => a+b, 0);
         let rata   = filled.length>0 ? Math.round(total/filled.length) : 0;
-        let pred   = rata>=90?'مُمتاز':rata>=80?'جيد جداً':rata>=70?'جيد':rata>=60?'مقبول':'راسب';
+        let pred   = rata>=90?'ممتاز':rata>=80?'جيد جداً':rata>=70?'جيد':rata>=60?'مقبول':'راسب';
         return { ...s, vals, total: Math.round(total), rata, pred, alfa: a.alfa||0, naik: a.naik!==false, orderedMapels };
     });
 
