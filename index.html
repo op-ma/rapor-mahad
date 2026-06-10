@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aplikasi Rapor 5.0</title>
+    <title>Aplikasi Rapor 4.0</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2d6a4f">
@@ -281,11 +281,27 @@
         .table-responsive { overflow-x: auto; margin-top: 6px; max-height: 580px; overflow-y: auto; border-radius: var(--radius-md); border: 1px solid var(--clr-border); }
         table.data-table { width: 100%; border-collapse: collapse; min-width: max-content; }
         
-        table.data-table th, table.data-table td { border-bottom: 1px solid var(--clr-border-soft); padding: 4px 6px; text-align: center; }
+        table.data-table th, table.data-table td { border: 1px solid var(--clr-border-soft); padding: 4px 6px; text-align: center; }
         
         table.data-table th { background: var(--clr-surface-2); color: var(--clr-text-muted); font-weight: 600; font-size: 11px; text-transform: uppercase; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid var(--clr-border); font-family: var(--font-body); }
         table.data-table tr:hover td { background: #f7faf6; }
-        table.data-table tr:last-child td { border-bottom: none; }
+        table.data-table tr:last-child td { border-bottom: 1px solid var(--clr-border-soft); }
+        
+        /* Rekap nilai: vertical header dengan wraptext untuk nama panjang */
+        .rekap-th-vertical {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            transform: rotate(180deg);
+            height: 130px;
+            max-height: 150px;
+            white-space: normal;
+            word-break: break-word;
+            padding: 6px 4px !important;
+            min-width: 28px;
+            max-width: 40px;
+            vertical-align: middle;   /* tengah vertikal */
+            text-align: center;       /* tengah horizontal dalam writing-mode */
+        }
 
         .input-tabel { 
             width: 65px !important;
@@ -358,15 +374,31 @@
             left: 0;
             z-index: 31;
             background: var(--clr-surface-2);
+            /* shadow kanan untuk pemisah visual */
+            box-shadow: 2px 0 4px rgba(0,0,0,0.08);
         }
 
-        /* Freeze column 1 & 2 pada body */
-        .table-responsive-frozen .data-table td:nth-child(1),
-        .table-responsive-frozen .data-table td:nth-child(2) {
+        /* Freeze column 1 & 2 pada body — background solid, tidak transparan */
+        .table-responsive-frozen .data-table tbody tr:nth-child(odd) td:nth-child(1),
+        .table-responsive-frozen .data-table tbody tr:nth-child(odd) td:nth-child(2) {
             position: sticky;
             left: 0;
             z-index: 10;
-            background: inherit;
+            background: #ffffff;
+            box-shadow: 2px 0 4px rgba(0,0,0,0.06);
+        }
+        .table-responsive-frozen .data-table tbody tr:nth-child(even) td:nth-child(1),
+        .table-responsive-frozen .data-table tbody tr:nth-child(even) td:nth-child(2) {
+            position: sticky;
+            left: 0;
+            z-index: 10;
+            background: #f9fafb;
+            box-shadow: 2px 0 4px rgba(0,0,0,0.06);
+        }
+        /* Hover state tetap solid */
+        .table-responsive-frozen .data-table tbody tr:hover td:nth-child(1),
+        .table-responsive-frozen .data-table tbody tr:hover td:nth-child(2) {
+            background: #f0f7f2 !important;
         }
 
         /* --- SECTION PANEL --- */
@@ -522,7 +554,7 @@
     <div class="app-header no-print">
         <div class="app-header-title">
             Aplikasi Rapor 5.0
-            <span>PESANTREN AL MA'TUQ</span>
+            <span>Madrasah Al Ma'tuq — Per Kelas</span>
         </div>
         <div style="font-size:12px; opacity:0.55; font-weight:400;">Data tersimpan di perangkat ini</div>
     </div>
@@ -552,13 +584,27 @@
 
     <div id="modal-catatan" class="modal-overlay no-print">
         <div class="modal-content">
-            <h3 class="latin">📝 Catatan Wali Kelas</h3>
+            <h3 class="latin">📝 Catatan & Kenaikan Kelas</h3>
             <p class="latin" id="nama_siswa_catatan" style="font-weight:600; color:var(--clr-primary); margin-bottom:14px;"></p>
             <input type="hidden" id="nisn_catatan">
+            <div id="blok_naik_kelas" style="display:none; margin-bottom:14px; padding:12px; background:#f8f9fa; border-radius:8px; border:1px solid #dee2e6;">
+                <label style="font-weight:600; margin-bottom:8px; display:block;">🎓 Status Kenaikan Kelas</label>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:13px; padding:8px 12px; border-radius:6px; border:2px solid #dee2e6; background:white; transition:all 0.2s;" id="lbl_naik">
+                        <input type="radio" name="status_naik" id="radio_naik" value="naik" onchange="updateStatusNaikKelas()" style="accent-color:#2d6a4f;">
+                        <span>✅ <b>NAIK KELAS</b></span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:13px; padding:8px 12px; border-radius:6px; border:2px solid #dee2e6; background:white; transition:all 0.2s;" id="lbl_tinggal">
+                        <input type="radio" name="status_naik" id="radio_tinggal" value="tinggal" onchange="updateStatusNaikKelas()" style="accent-color:#dc3545;">
+                        <span style="color:#dc3545;">❌ <b>TINGGAL KELAS</b></span>
+                    </label>
+                </div>
+                <div id="preview_naik_kelas" style="margin-top:10px; font-size:12px; color:#666; display:none;"></div>
+            </div>
             <textarea id="teks_catatan" class="latin" placeholder="Ketik catatan untuk siswa ini..."></textarea>
             <div class="modal-footer">
                 <button class="btn-danger latin" onclick="tutupModalCatatan()">Batal</button>
-                <button class="btn-save latin" onclick="simpanCatatanModal()">💾 Simpan Catatan</button>
+                <button class="btn-save latin" onclick="simpanCatatanModal()">💾 Simpan</button>
             </div>
         </div>
     </div>
@@ -709,7 +755,7 @@
                         </select>
                     </div>
                     <div class="form-group" style="margin:0;"><label>Semester (Latin)</label>
-                        <select id="id_semester_latin">
+                        <select id="id_semester_latin" onchange="onSemesterChange()">
                             <option value="Ganjil (I)">Ganjil (I)</option>
                             <option value="Genap (II)">Genap (II)</option>
                         </select>
@@ -943,15 +989,15 @@
     <!-- TAB CATATAN -->
     <!-- ============================================================ -->
     <div id="tab-catatan" class="tab-content latin">
-        <h2>📝 Catatan Wali Kelas</h2>
+        <h2>📝 Catatan & Kenaikan Kelas</h2>
         <div class="info-tip" style="margin-bottom:16px;" id="info-catatan-kelas">ℹ️ Silakan pilih kelas terlebih dahulu di tab <b>Identitas & Kelas</b>.</div>
         <div class="card">
-            <h3>Catatan Per Siswa</h3>
-            <p style="font-size:13px; color:var(--clr-text-muted); margin-bottom:12px;">Klik tombol "Edit" untuk mengisi catatan wali kelas untuk masing-masing santri.</p>
+            <h3>Catatan & Status Kenaikan Per Siswa</h3>
+            <p style="font-size:13px; color:var(--clr-text-muted); margin-bottom:12px;">Isi catatan dan tentukan status kenaikan kelas setiap santri. Status kenaikan akan tampil otomatis di cetak rapor semester genap.</p>
             <div class="table-responsive">
                 <table class="data-table">
                     <thead>
-                        <tr><th>No</th><th>NISN</th><th>Nama Santri</th><th>Catatan</th><th>Aksi</th></tr>
+                        <tr><th>No</th><th>NISN</th><th>Nama Santri</th><th>Status Kenaikan</th><th>Catatan</th><th>Aksi</th></tr>
                     </thead>
                     <tbody id="tb_catatan_tab"></tbody>
                 </table>
@@ -983,14 +1029,32 @@
             <div style="border-top:1px solid var(--clr-border-soft); padding-top:16px;">
                 <div class="grid-2" style="align-items:start;">
                     <div>
-                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:600; font-size:13px; color:var(--clr-text); text-transform:none; letter-spacing:0;">
-                            <input type="checkbox" id="c_is_genap" onchange="toggleGenapOptions(); previewRapor();">
-                            Tampilkan Kotak Keputusan Kenaikan Kelas (Semester Genap)
-                        </label>
-                        <div id="genap_options" style="display:none; margin-top:12px;" class="grid-2">
-                            <div class="form-group" style="margin:0;"><label>Kelas Tujuan (Jika NAIK)</label><input type="text" id="c_kelas_naik" placeholder="Cth: 2 MA (Atau LULUS)" oninput="previewRapor()"></div>
-                            <div class="form-group" style="margin:0;"><label>Kelas Saat Ini (Jika TINGGAL)</label><input type="text" id="c_kelas_tinggal" placeholder="Cth: 1 MA" oninput="previewRapor()"></div>
+                        <div id="genap_options" style="display:none;" class="grid-2">
+                            <div class="form-group" style="margin:0;"><label>Kelas Tujuan (Jika NAIK)</label>
+                                <select id="c_kelas_naik" onchange="previewRapor()" style="width:100%; padding:7px; border:1.5px solid var(--clr-border); border-radius:var(--radius-sm); font-size:13px;">
+                                    <option value="">-- Pilih Kelas --</option>
+                                    <option value="2 MTs">2 MTs</option>
+                                    <option value="3 MTs">3 MTs</option>
+                                    <option value="1 MA">1 MA</option>
+                                    <option value="2 MA">2 MA</option>
+                                    <option value="3 MA">3 MA</option>
+                                    <option value="Lulus">Lulus</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin:0;"><label>Kelas Saat Ini (Jika TINGGAL)</label>
+                                <select id="c_kelas_tinggal" onchange="previewRapor()" style="width:100%; padding:7px; border:1.5px solid var(--clr-border); border-radius:var(--radius-sm); font-size:13px;">
+                                    <option value="">-- Pilih Kelas --</option>
+                                    <option value="1 MTs">1 MTs</option>
+                                    <option value="2 MTs">2 MTs</option>
+                                    <option value="3 MTs">3 MTs</option>
+                                    <option value="1 MA">1 MA</option>
+                                    <option value="2 MA">2 MA</option>
+                                    <option value="3 MA">3 MA</option>
+                                    <option value="Tidak Lulus">Tidak Lulus</option>
+                                </select>
+                            </div>
                         </div>
+                        <input type="hidden" id="c_is_genap" value="0">
                     </div>
                     <div>
                         <label>Mode Cetak</label>
@@ -1425,9 +1489,15 @@ function loadIdentitasForm() {
     document.getElementById('id_kepala').value = i.kepala || '';
     document.getElementById('id_wali').value = i.wali || '';
     document.getElementById('id_jk_wali').value = i.jk_wali || 'L';
-    document.getElementById('c_kelas_tinggal').value = i.kelas || '';
+    // Restore kelas naik/tinggal if saved
+    if (i.kelas_naik) { let el = document.getElementById('c_kelas_naik'); if (el) el.value = i.kelas_naik; }
+    if (i.kelas_tinggal) { let el = document.getElementById('c_kelas_tinggal'); if (el) el.value = i.kelas_tinggal; }
+    // Sync semester state (show/hide kotak keputusan)
+    onSemesterChange();
 }
 function simpanIdentitas() {
+    let elNaik = document.getElementById('c_kelas_naik');
+    let elTinggal = document.getElementById('c_kelas_tinggal');
     db.identitas = {
         madrasah: document.getElementById('id_madrasah').value,
         kelas: document.getElementById('id_kelas').value,
@@ -1440,7 +1510,9 @@ function simpanIdentitas() {
         tgl_masehi: document.getElementById('id_tgl_masehi').value,
         kepala: document.getElementById('id_kepala').value,
         wali: document.getElementById('id_wali').value,
-        jk_wali: document.getElementById('id_jk_wali').value
+        jk_wali: document.getElementById('id_jk_wali').value,
+        kelas_naik: elNaik ? elNaik.value : '',
+        kelas_tinggal: elTinggal ? elTinggal.value : ''
     };
     saveData(); showToast('✅ Identitas berhasil disimpan!');
 }
@@ -1783,57 +1855,60 @@ function filterSiswa(jenis) {
 function setupPasteHandler(jenis) {
     let tbody = document.getElementById(jenis==='akademik' ? 'tb_akademik' : 'tb_praktik');
     if (!tbody) return;
+    // Remove old listener to avoid duplicates
+    let newTbody = tbody.cloneNode(true);
+    tbody.parentNode.replaceChild(newTbody, tbody);
     
-    tbody.addEventListener('paste', function(e) {
+    newTbody.addEventListener('paste', function(e) {
         e.preventDefault();
-        
         let clipboardData = (e.clipboardData || window.clipboardData);
         let pastedText = clipboardData.getData('text');
-        
-        // Parse data: Excel format adalah tab-separated columns, newline-separated rows
         let rows = pastedText.split('\n').filter(r => r.trim());
         let targetCell = document.activeElement;
-        
-        // Ensure target is an input field
         if (!targetCell || targetCell.tagName !== 'INPUT') return;
-        
-        // Get current position in table
         let inputParent = targetCell.closest('td');
         if (!inputParent) return;
-        
         let currentRow = inputParent.closest('tr');
         let currentTbody = currentRow.closest('tbody');
         let allRows = Array.from(currentTbody.getElementsByTagName('tr'));
         let currentRowIndex = allRows.indexOf(currentRow);
-        
-        // Get all input cells from current row (skip NISN & Nama columns)
         let startCellIndex = Array.from(currentRow.getElementsByTagName('td')).indexOf(inputParent);
-        
-        // Parse pasted data
+
+        // Collect all (nisn, mapelId, value) to save at once
+        let toSave = [];
         rows.forEach((row, rowIdx) => {
             let values = row.split('\t').map(v => v.trim());
-            
             let targetRowIdx = currentRowIndex + rowIdx;
-            if (targetRowIdx >= allRows.length) return; // Stop if beyond available rows
-            
+            if (targetRowIdx >= allRows.length) return;
             let targetRow = allRows[targetRowIdx];
             let targetCells = Array.from(targetRow.getElementsByTagName('td'));
-            
+
             values.forEach((value, colIdx) => {
                 let targetCellIdx = startCellIndex + colIdx;
-                if (targetCellIdx >= targetCells.length) return; // Stop if beyond available columns
-                
-                let targetInputCell = targetCells[targetCellIdx].querySelector('input[type="text"], input[type="number"]');
-                if (targetInputCell) {
-                    // Set value
-                    targetInputCell.value = value;
-                    
-                    // Trigger input event for realtime calculation
-                    let event = new Event('input', { bubbles: true });
-                    targetInputCell.dispatchEvent(event);
+                if (targetCellIdx >= targetCells.length) return;
+                let inp = targetCells[targetCellIdx].querySelector('input[type="text"], input[type="number"]');
+                if (inp) {
+                    // Only accept valid numbers
+                    let cleaned = value.replace(/[^0-9.]/g, '');
+                    inp.value = cleaned;
+                    inp.style.color = (cleaned !== '' && parseFloat(cleaned) < 65) ? 'red' : 'inherit';
+                    // Collect NISN & mapelId from the onchange attribute
+                    let onch = inp.getAttribute('onchange') || '';
+                    let m = onch.match(/updateNilaiLangsung\('([^']+)','([^']+)'/);
+                    if (m) toSave.push({ nisn: m[1], mapelId: m[2], val: cleaned });
                 }
             });
         });
+
+        // Save all at once then recalc once
+        if (toSave.length > 0) {
+            toSave.forEach(({ nisn, mapelId, val }) => {
+                if (!db.nilai[jenis][nisn]) db.nilai[jenis][nisn] = {};
+                db.nilai[jenis][nisn][mapelId] = val === '' ? '' : parseFloat(val);
+            });
+            saveData();
+            hitungDanRenderRekap(jenis);
+        }
     });
 }
 
@@ -2003,8 +2078,8 @@ function hitungDanRenderRekap(jenis) {
     let thHTML = '';
     if (jenis==='akademik') {
         thHTML = `<tr><th>NISN</th><th>Nama</th>`;
-        db.mapel.akademik.forEach(m => thHTML += `<th style="white-space:nowrap; font-size:11px;">${m.latin}<br><span class="arab" style="font-weight:normal;">${m.arab}</span></th>`);
-        thHTML += `<th style="white-space:nowrap;">Total</th><th>Rata</th><th>Predikat</th><th>Rank</th></tr>`;
+        db.mapel.akademik.forEach(m => thHTML += `<th class="rekap-th-vertical">${m.latin}</th>`);
+        thHTML += `<th style="min-width:45px;">Total</th><th style="min-width:40px;">Rata</th><th style="min-width:60px;">Predikat</th><th style="min-width:35px;">Rank</th></tr>`;
     } else {
         // Build two-row header: row 1 = kategori (Arab + Latin), row 2 = sub-mapel
         let thRow1 = `<tr><th rowspan="2">NISN</th><th rowspan="2">Nama</th>`;
@@ -2015,15 +2090,15 @@ function hitungDanRenderRekap(jenis) {
                 let katArab = kat.arab ? kat.arab : '';
                 let katLabel = katArab ? `<span class="arab" dir="rtl" style="font-size:1.1em;display:block;">${katArab}</span><span class="latin" style="font-size:0.85em;">${kat.latin}</span>` : kat.latin;
                 thRow1 += `<th colspan="${items.length}" style="background:var(--clr-primary-light); color:var(--clr-primary-dark); text-align:center;">${katLabel}</th>`;
-                items.forEach(m => thRow2 += `<th style="white-space:nowrap; font-size:11px;">${m.latin}<br><span class="arab" style="font-weight:normal;font-size:0.9em;">${m.arab||''}</span></th>`);
+                items.forEach(m => thRow2 += `<th class="rekap-th-vertical">${m.latin}</th>`);
             }
         });
         let unass = db.mapel.praktik.filter(m => !db.kategori_praktik.find(k => k.id===m.kategori));
         if (unass.length > 0) {
             thRow1 += `<th colspan="${unass.length}" style="background:var(--clr-accent-light);">Lainnya</th>`;
-            unass.forEach(m => thRow2 += `<th style="white-space:nowrap; font-size:11px;">${m.latin}<br><span class="arab" style="font-weight:normal;font-size:0.9em;">${m.arab||''}</span></th>`);
+            unass.forEach(m => thRow2 += `<th class="rekap-th-vertical">${m.latin}</th>`);
         }
-        thRow1 += `<th rowspan="2">Total</th><th rowspan="2">Rata</th><th rowspan="2">Predikat</th><th rowspan="2">Rank</th></tr>`;
+        thRow1 += `<th rowspan="2" style="height:150px;">Total</th><th rowspan="2" style="height:150px;">Rata</th></tr>`;
         thRow2 += `</tr>`;
         thHTML = thRow1 + thRow2;
     }
@@ -2045,9 +2120,9 @@ function hitungDanRenderRekap(jenis) {
         });
         let filled = vals.filter(x => x!==null);
         let total  = filled.reduce((a,b) => a+b, 0);
-        let rata   = filled.length>0 ? (total/filled.length).toFixed(2) : 0;
+        let rata   = filled.length>0 ? Math.round(total/filled.length) : 0;
         let pred   = rata>=90?'مُمتاز':rata>=80?'جيد جداً':rata>=70?'جيد':rata>=60?'مقبول':'راسب';
-        return { ...s, vals, total: total.toFixed(2), rata, pred, alfa: a.alfa||0, naik: a.naik!==false, orderedMapels };
+        return { ...s, vals, total: Math.round(total), rata, pred, alfa: a.alfa||0, naik: a.naik!==false, orderedMapels };
     });
 
     // Ranking
@@ -2074,10 +2149,12 @@ function hitungDanRenderRekap(jenis) {
         });
         let cPred = d.pred==='راسب' ? 'color:red;font-weight:bold;' : 'color:var(--clr-success);font-weight:bold;';
         trHTML += `<td class="latin" style="white-space:nowrap; padding:4px;"><b>${d.total}</b></td>
-            <td class="latin" style="white-space:nowrap; padding:4px;"><b>${d.rata}</b></td>
-            <td class="arab" dir="rtl" style="${cPred} white-space:nowrap; padding:4px;">${d.pred}</td>
-            <td class="latin" style="white-space:nowrap; padding:4px;"><b>${db.nilai[jenis][d.nisn].kalkulasi.rankFull}</b></td>`;
-        trHTML += '</tr>';
+            <td class="latin" style="white-space:nowrap; padding:4px;"><b>${d.rata}</b></td>`;
+        if (jenis==='akademik') {
+            trHTML += `<td class="arab" dir="rtl" style="${cPred} white-space:nowrap; padding:4px;">${d.pred}</td>
+                <td class="latin" style="white-space:nowrap; padding:4px;"><b>${db.nilai[jenis][d.nisn].kalkulasi.rankFull}</b></td>`;
+        }
+        trHTML += `</tr>`;
     });
     tbody.innerHTML = trHTML;
     filterSiswa(jenis);
@@ -2223,19 +2300,35 @@ function renderCatatanTab() {
         return;
     }
     document.getElementById('info-catatan-kelas').style.display = 'none';
+    let isGenap = (db.identitas.semester_latin||'').includes('Genap');
     let trHTML = '';
     db.siswa.forEach((s, i) => {
         let abs = db.absensi[s.nisn] || {};
         let catatan = abs.catatan || '';
-        let preview = catatan ? catatan.substring(0, 40) + (catatan.length > 40 ? '...' : '') : '<em style="color:var(--clr-text-faint);">— belum ada catatan —</em>';
+        let preview = catatan ? catatan.substring(0, 35) + (catatan.length > 35 ? '...' : '') : '<em style="color:var(--clr-text-faint);">— belum ada —</em>';
+        let naikStatus = '';
+        if (isGenap) {
+            let naik = abs.naik !== false;
+            let kNaik = (db.identitas.kelas_naik || '');
+            let kTinggal = (db.identitas.kelas_tinggal || '');
+            naikStatus = naik
+                ? `<span style="color:#2d6a4f; font-weight:700;">✅ Naik → ${kNaik||'...'}</span>`
+                : `<span style="color:#dc3545; font-weight:700;">❌ Tinggal → ${kTinggal||'...'}</span>`;
+        }
         trHTML += `<tr>
             <td>${i+1}</td>
             <td>${s.nisn}</td>
             <td style="text-align:left; white-space:nowrap;">${s.nama}</td>
+            ${isGenap ? `<td style="text-align:center;">${naikStatus}</td>` : ''}
             <td style="text-align:left; font-size:12px;">${preview}</td>
             <td><button class="btn-edit latin" onclick="editCatatanTab('${s.nisn}', '${s.nama.replace(/'/g,"\\'")}')">📝 Edit</button></td>
         </tr>`;
     });
+    // Update thead too
+    let thead = document.querySelector('#tab-catatan thead tr');
+    if (thead) {
+        thead.innerHTML = `<th>No</th><th>NISN</th><th>Nama Santri</th>${isGenap?'<th>Status Kenaikan</th>':''}<th>Catatan</th><th>Aksi</th>`;
+    }
     document.getElementById('tb_catatan_tab').innerHTML = trHTML;
 }
 
@@ -2246,17 +2339,61 @@ window.editCatatanTab = function(nisn, nama) {
     document.getElementById('nisn_catatan').value = nisn;
     document.getElementById('nama_siswa_catatan').innerText = 'Santri: ' + s.nama;
     document.getElementById('teks_catatan').value = a.catatan || '';
+    
+    // Show naik/tinggal block only for genap
+    let isGenap = (db.identitas.semester_latin||'').includes('Genap');
+    let blok = document.getElementById('blok_naik_kelas');
+    if (blok) blok.style.display = isGenap ? 'block' : 'none';
+    
+    if (isGenap) {
+        let naik = a.naik !== false;
+        document.getElementById('radio_naik').checked = naik;
+        document.getElementById('radio_tinggal').checked = !naik;
+        updateStatusNaikKelas();
+    }
+    
     document.getElementById('modal-catatan').style.display = 'flex';
 };
 
-// Override simpanCatatanModal to also refresh catatan tab
-const _origSimpanCatatan = window.simpanCatatanModal;
+function updateStatusNaikKelas() {
+    let naik = document.getElementById('radio_naik').checked;
+    let kNaik = db.identitas.kelas_naik || '...';
+    let kTinggal = db.identitas.kelas_tinggal || '...';
+    let preview = document.getElementById('preview_naik_kelas');
+    if (preview) {
+        preview.style.display = 'block';
+        if (naik) {
+            preview.innerHTML = `Pada rapor: <b>NAIK</b> ke kelas <b>${kNaik}</b> &nbsp;|&nbsp; ~~TINGGAL di kelas ${kTinggal}~~`;
+        } else {
+            preview.innerHTML = `Pada rapor: ~~NAIK ke kelas ${kNaik}~~ &nbsp;|&nbsp; <b style="color:#dc3545;">TINGGAL di kelas <b>${kTinggal}</b>`;
+        }
+    }
+    // Highlight active label
+    let lblNaik = document.getElementById('lbl_naik');
+    let lblTinggal = document.getElementById('lbl_tinggal');
+    if (lblNaik) lblNaik.style.borderColor = naik ? '#2d6a4f' : '#dee2e6';
+    if (lblTinggal) lblTinggal.style.borderColor = !naik ? '#dc3545' : '#dee2e6';
+}
+
+window.tutupModalCatatan = function() { document.getElementById('modal-catatan').style.display = 'none'; };
+
 window.simpanCatatanModal = function() {
     let nisn = document.getElementById('nisn_catatan').value;
     let catatan = document.getElementById('teks_catatan').value;
-    if (!db.absensi[nisn]) db.absensi[nisn] = {sakit:0,izin:0,alfa:0,sikap:'B',catatan:'',naik:true};
+    if (!db.absensi[nisn]) db.absensi[nisn] = {sakit:0, izin:0, alfa:0, sikap:'B', catatan:'', naik:true};
     db.absensi[nisn].catatan = catatan;
-    saveData(); hitungDanRenderRekap('akademik'); tutupModalCatatan(); showToast('✅ Catatan disimpan.');
+    
+    // Save naik status if genap
+    let isGenap = (db.identitas.semester_latin||'').includes('Genap');
+    if (isGenap) {
+        let naik = document.getElementById('radio_naik').checked;
+        db.absensi[nisn].naik = naik;
+    }
+    
+    saveData();
+    hitungDanRenderRekap('akademik');
+    tutupModalCatatan();
+    showToast('✅ Catatan & status kenaikan disimpan.');
     renderCatatanTab();
 };
 
@@ -2296,9 +2433,24 @@ function bukaTab(idTab, btn) {
     if (idTab==='tab-sikap') renderSikapTab();
     if (idTab==='tab-catatan') renderCatatanTab();
 }
+function onSemesterChange() {
+    // Sync Arab semester when Latin changes
+    let lat = document.getElementById('id_semester_latin').value;
+    let isGenap = lat.includes('Genap') || lat.includes('II');
+    let arabEl = document.getElementById('id_semester_arab');
+    if (arabEl) arabEl.value = isGenap ? 'الثاني' : 'الأول';
+    // Automatically show/hide kotak keputusan on cetak tab
+    let hidden = document.getElementById('c_is_genap');
+    if (hidden) hidden.value = isGenap ? '1' : '0';
+    toggleGenapOptions();
+    previewRapor();
+}
+
 function toggleGenapOptions() {
-    let isChecked = document.getElementById('c_is_genap').checked;
-    document.getElementById('genap_options').style.display = isChecked ? 'grid' : 'none';
+    let isGenap = false;
+    let hidden = document.getElementById('c_is_genap');
+    if (hidden) isGenap = hidden.value === '1';
+    document.getElementById('genap_options').style.display = isGenap ? 'grid' : 'none';
 }
 
 // ============================================================
@@ -2613,7 +2765,7 @@ function generateHTMLRaporSatuSiswa(nisn, jenis, isGenap, kelasNaik, kelasTingga
 function previewRapor() {
     let nisn  = document.getElementById('c_pilih_siswa').value;
     let jenis = document.getElementById('c_jenis_rapor').value;
-    let isGenap      = document.getElementById('c_is_genap').checked;
+    let isGenap      = document.getElementById('c_is_genap').value === '1';
     let kelasNaik    = document.getElementById('c_kelas_naik').value;
     let kelasTinggal = document.getElementById('c_kelas_tinggal').value;
     let isCetakTTD   = document.getElementById('c_mode_cetak').value==='ttd';
@@ -2630,7 +2782,7 @@ function previewRapor() {
 }
 function previewSemuaRapor() {
     let jenis = document.getElementById('c_jenis_rapor').value;
-    let isGenap      = document.getElementById('c_is_genap').checked;
+    let isGenap      = document.getElementById('c_is_genap').value === '1';
     let kelasNaik    = document.getElementById('c_kelas_naik').value;
     let kelasTinggal = document.getElementById('c_kelas_tinggal').value;
     let isCetakTTD   = document.getElementById('c_mode_cetak').value==='ttd';
