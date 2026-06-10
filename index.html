@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aplikasi Rapor 4.0</title>
+    <title>Aplikasi Rapor 5.0</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2d6a4f">
@@ -288,21 +288,48 @@
         table.data-table tr:last-child td { border-bottom: none; }
 
         .input-tabel { 
-            width: 32px;
+            width: 65px !important;
+            max-width: 70px;
+            min-width: 55px;
             margin: 0 auto;
-            border: 1px solid transparent; 
-            background: #fdfdfd; 
+            border: 1.5px solid #e0e0e0; 
+            background: #fafafa; 
             text-align: center; 
-            font-size: 11px; 
+            font-size: 13px; 
             font-weight: 600; 
-            padding: 2px 0; 
+            padding: 6px 3px; 
             font-family: var(--font-body); 
             border-radius: 4px; 
-            transition: all 0.15s; 
+            transition: all 0.15s;
+            box-sizing: border-box;
+            display: inline-block;
         }
-        .input-tabel:hover { border-color: var(--clr-border); }
-        .input-tabel:focus { background: #fffde7; outline: 2px solid var(--clr-accent); border-color: transparent; }
-        .input-tabel::-webkit-inner-spin-button { display: none; }
+        
+        /* Support both text and number inputs */
+        .input-tabel[type="text"],
+        .input-tabel[type="number"] {
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .input-tabel:hover { 
+            border-color: #999;
+            background: #fff;
+        }
+        .input-tabel:focus { 
+            background: #fffde7; 
+            outline: 2px solid var(--clr-accent); 
+            border-color: var(--clr-accent);
+            width: 75px !important;
+            box-shadow: 0 0 8px rgba(183, 147, 90, 0.3);
+        }
+        .input-tabel::-webkit-outer-spin-button,
+        .input-tabel::-webkit-inner-spin-button { 
+            display: none;
+            margin: 0;
+        }
+        .input-tabel[type=number] { 
+            -moz-appearance: textfield;
+        }
 
         /* --- FROZEN COLUMNS FOR NILAI TABLE (Double Freeze: Header & Name) --- */
         .table-responsive-frozen { 
@@ -495,7 +522,7 @@
     <div class="app-header no-print">
         <div class="app-header-title">
             Aplikasi Rapor 5.0
-            <span>Madrasah Al Ma'tuq — Per Kelas</span>
+            <span>PESANTREN AL MA'TUQ</span>
         </div>
         <div style="font-size:12px; opacity:0.55; font-weight:400;">Data tersimpan di perangkat ini</div>
     </div>
@@ -552,6 +579,25 @@
             <div class="modal-footer">
                 <button class="btn-danger latin" onclick="tutupModalEditMapel()">Batal</button>
                 <button class="btn-save latin" onclick="simpanEditMapel()">💾 Simpan Perubahan</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-edit-kategori" class="modal-overlay no-print">
+        <div class="modal-content">
+            <h3 class="latin">✏️ Edit Kategori Praktik</h3>
+            <input type="hidden" id="edit_kat_id">
+            <div class="form-group">
+                <label>Kategori (Latin)</label>
+                <input type="text" id="edit_kat_latin" placeholder="Nama Kategori Latin">
+            </div>
+            <div class="form-group">
+                <label>Kategori (Arab)</label>
+                <input type="text" id="edit_kat_arab" dir="rtl" class="arab" placeholder="اسم الفئة">
+            </div>
+            <div class="modal-footer">
+                <button class="btn-danger latin" onclick="tutupModalEditKategori()">Batal</button>
+                <button class="btn-save latin" onclick="simpanEditKategori()">💾 Simpan Perubahan</button>
             </div>
         </div>
     </div>
@@ -1315,6 +1361,37 @@ function hapusKategoriPraktik(id) {
         saveData(); renderKategoriPraktik();
     }
 }
+
+function editKategoriPraktik(id) {
+    let k = db.kategori_praktik.find(x => x.id === id);
+    if (!k) return;
+    document.getElementById('edit_kat_id').value = id;
+    document.getElementById('edit_kat_latin').value = k.latin;
+    document.getElementById('edit_kat_arab').value = k.arab || '';
+    document.getElementById('modal-edit-kategori').style.display = 'flex';
+}
+
+function tutupModalEditKategori() {
+    document.getElementById('modal-edit-kategori').style.display = 'none';
+}
+
+function simpanEditKategori() {
+    let id = document.getElementById('edit_kat_id').value;
+    let latin = document.getElementById('edit_kat_latin').value.trim();
+    let arab = document.getElementById('edit_kat_arab').value.trim();
+    
+    if (!latin) { alert('Nama Kategori (Latin) tidak boleh kosong!'); return; }
+    
+    let k = db.kategori_praktik.find(x => x.id === id);
+    if (k) {
+        k.latin = latin;
+        k.arab = arab;
+        saveData();
+        renderKategoriPraktik();
+        showToast('✅ Kategori berhasil diperbarui!');
+        tutupModalEditKategori();
+    }
+}
 function renderKategoriPraktik() {
     let list = document.getElementById('list_kategori_praktik');
     let sel  = document.getElementById('m_pr_kategori');
@@ -1699,12 +1776,76 @@ function filterSiswa(jenis) {
         }
     });
 }
+
+// ============================================================
+// COPY-PASTE FUNCTIONALITY - Support horizontal & vertical paste
+// ============================================================
+function setupPasteHandler(jenis) {
+    let tbody = document.getElementById(jenis==='akademik' ? 'tb_akademik' : 'tb_praktik');
+    if (!tbody) return;
+    
+    tbody.addEventListener('paste', function(e) {
+        e.preventDefault();
+        
+        let clipboardData = (e.clipboardData || window.clipboardData);
+        let pastedText = clipboardData.getData('text');
+        
+        // Parse data: Excel format adalah tab-separated columns, newline-separated rows
+        let rows = pastedText.split('\n').filter(r => r.trim());
+        let targetCell = document.activeElement;
+        
+        // Ensure target is an input field
+        if (!targetCell || targetCell.tagName !== 'INPUT') return;
+        
+        // Get current position in table
+        let inputParent = targetCell.closest('td');
+        if (!inputParent) return;
+        
+        let currentRow = inputParent.closest('tr');
+        let currentTbody = currentRow.closest('tbody');
+        let allRows = Array.from(currentTbody.getElementsByTagName('tr'));
+        let currentRowIndex = allRows.indexOf(currentRow);
+        
+        // Get all input cells from current row (skip NISN & Nama columns)
+        let startCellIndex = Array.from(currentRow.getElementsByTagName('td')).indexOf(inputParent);
+        
+        // Parse pasted data
+        rows.forEach((row, rowIdx) => {
+            let values = row.split('\t').map(v => v.trim());
+            
+            let targetRowIdx = currentRowIndex + rowIdx;
+            if (targetRowIdx >= allRows.length) return; // Stop if beyond available rows
+            
+            let targetRow = allRows[targetRowIdx];
+            let targetCells = Array.from(targetRow.getElementsByTagName('td'));
+            
+            values.forEach((value, colIdx) => {
+                let targetCellIdx = startCellIndex + colIdx;
+                if (targetCellIdx >= targetCells.length) return; // Stop if beyond available columns
+                
+                let targetInputCell = targetCells[targetCellIdx].querySelector('input[type="text"], input[type="number"]');
+                if (targetInputCell) {
+                    // Set value
+                    targetInputCell.value = value;
+                    
+                    // Trigger input event for realtime calculation
+                    let event = new Event('input', { bubbles: true });
+                    targetInputCell.dispatchEvent(event);
+                }
+            });
+        });
+    });
+}
+
 function updateNilaiLangsung(nisn, mapelId, jenis, el) {
     if (!db.nilai[jenis][nisn]) db.nilai[jenis][nisn] = {};
     let val = el.value;
     db.nilai[jenis][nisn][mapelId] = val==='' ? '' : parseFloat(val);
     saveData();
     el.style.color = (val!=='' && parseFloat(val)<65) ? 'red' : 'inherit';
+    
+    // Update total & rata2 realtime
+    hitungDanRenderRekap(jenis);
 }
 function updateAbsensiLangsung(nisn, key, el) {
     if (!db.absensi[nisn]) db.absensi[nisn] = {sakit:0,izin:0,alfa:0,sikap:'B',catatan:'',naik:true};
@@ -1926,9 +2067,10 @@ function hitungDanRenderRekap(jenis) {
             let rawV = db.nilai[jenis][d.nisn] ? db.nilai[jenis][d.nisn][m.id] : '';
             let curV = (rawV!==undefined && rawV!==null && rawV!=='') ? rawV : '';
             let cMerah = (curV!=='' && parseFloat(curV)<65) ? 'color:red;' : '';
-            trHTML += `<td style="padding:2px;"><input type="number" class="input-tabel" value="${curV}" style="${cMerah}" 
-                min="0" max="100" step="0.5"
-                oninput="updateNilaiLangsung('${d.nisn}','${m.id}','${jenis}',this)"></td>`;
+            trHTML += `<td style="padding:2px; min-width:75px; text-align:center;"><input type="text" 
+                inputmode="decimal" pattern="[0-9.]+" maxlength="5" class="input-tabel" value="${curV}" style="${cMerah}; width:65px;" 
+                oninput="this.value=this.value.replace(/[^0-9.]/g,''); this.style.color=(this.value && parseFloat(this.value)<65)?'red':'inherit';"
+                onchange="updateNilaiLangsung('${d.nisn}','${m.id}','${jenis}',this)"></td>`;
         });
         let cPred = d.pred==='راسب' ? 'color:red;font-weight:bold;' : 'color:var(--clr-success);font-weight:bold;';
         trHTML += `<td class="latin" style="white-space:nowrap; padding:4px;"><b>${d.total}</b></td>
@@ -1939,6 +2081,7 @@ function hitungDanRenderRekap(jenis) {
     });
     tbody.innerHTML = trHTML;
     filterSiswa(jenis);
+    setupPasteHandler(jenis);  // Enable paste functionality
 }
 
 // ============================================================
@@ -1963,12 +2106,15 @@ function renderAbsensiTab() {
         trHTML += `<tr>
             <td style="min-width:70px;">${s.nisn}</td>
             <td style="text-align:left; white-space:nowrap; min-width:130px;">${s.nama}</td>
-            <td style="padding:2px;"><input type="number" class="input-tabel" value="${abs.sakit||0}" min="0"
-                oninput="updateAbsensiLangsung('${s.nisn}','sakit',this); renderAbsensiTab()"></td>
-            <td style="padding:2px;"><input type="number" class="input-tabel" value="${abs.izin||0}" min="0"
-                oninput="updateAbsensiLangsung('${s.nisn}','izin',this); renderAbsensiTab()"></td>
-            <td style="padding:2px;"><input type="number" class="input-tabel" value="${abs.alfa||0}" min="0"
-                oninput="updateAbsensiLangsung('${s.nisn}','alfa',this); renderAbsensiTab()"></td>
+            <td style="padding:2px; min-width:75px; text-align:center;"><input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" class="input-tabel" value="${abs.sakit||0}" style="width:65px;"
+                oninput="this.value=this.value.replace(/[^0-9]/g,'');"
+                onchange="updateAbsensiLangsung('${s.nisn}','sakit',this); renderAbsensiTab()"></td>
+            <td style="padding:2px; min-width:75px; text-align:center;"><input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" class="input-tabel" value="${abs.izin||0}" style="width:65px;"
+                oninput="this.value=this.value.replace(/[^0-9]/g,'');"
+                onchange="updateAbsensiLangsung('${s.nisn}','izin',this); renderAbsensiTab()"></td>
+            <td style="padding:2px; min-width:75px; text-align:center;"><input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" class="input-tabel" value="${abs.alfa||0}" style="width:65px;"
+                oninput="this.value=this.value.replace(/[^0-9]/g,'');"
+                onchange="updateAbsensiLangsung('${s.nisn}','alfa',this); renderAbsensiTab()"></td>
             <td style="padding:2px;">
                 <select style="width:80px; padding:4px; font-size:11px; border:1px solid var(--clr-border); border-radius:4px;"
                     onchange="updateAbsensiLangsung('${s.nisn}','sikap',this); renderAbsensiTab()">
@@ -1981,6 +2127,56 @@ function renderAbsensiTab() {
         </tr>`;
     });
     document.getElementById('tb_absensi_tab').innerHTML = trHTML;
+    
+    // Setup paste handler for absensi columns (sakit, izin, alfa, sikap)
+    let absensiTbody = document.getElementById('tb_absensi_tab');
+    if (absensiTbody) {
+        absensiTbody.addEventListener('paste', function(e) {
+            e.preventDefault();
+            let clipboardData = (e.clipboardData || window.clipboardData);
+            let pastedText = clipboardData.getData('text');
+            let rows = pastedText.split('\n').filter(r => r.trim());
+            let targetCell = document.activeElement;
+            
+            if (!targetCell || (targetCell.tagName !== 'INPUT' && targetCell.tagName !== 'SELECT')) return;
+            
+            let inputParent = targetCell.closest('td');
+            if (!inputParent) return;
+            
+            let currentRow = inputParent.closest('tr');
+            let allRows = Array.from(absensiTbody.getElementsByTagName('tr'));
+            let currentRowIndex = allRows.indexOf(currentRow);
+            let startCellIndex = Array.from(currentRow.getElementsByTagName('td')).indexOf(inputParent);
+            
+            // Paste values
+            rows.forEach((row, rowIdx) => {
+                let values = row.split('\t').map(v => v.trim());
+                let targetRowIdx = currentRowIndex + rowIdx;
+                if (targetRowIdx >= allRows.length) return;
+                
+                let targetRow = allRows[targetRowIdx];
+                let targetCells = Array.from(targetRow.getElementsByTagName('td'));
+                
+                values.forEach((value, colIdx) => {
+                    let targetCellIdx = startCellIndex + colIdx;
+                    if (targetCellIdx >= targetCells.length) return;
+                    
+                    let targetInput = targetCells[targetCellIdx].querySelector('input');
+                    let targetSelect = targetCells[targetCellIdx].querySelector('select');
+                    
+                    if (targetInput) {
+                        targetInput.value = value;
+                        let event = new Event('change', { bubbles: true });
+                        targetInput.dispatchEvent(event);
+                    } else if (targetSelect) {
+                        targetSelect.value = value.toUpperCase();
+                        let event = new Event('change', { bubbles: true });
+                        targetSelect.dispatchEvent(event);
+                    }
+                });
+            });
+        });
+    }
 }
 
 // ============================================================
