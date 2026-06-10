@@ -288,14 +288,14 @@
         table.data-table tr:last-child td { border-bottom: none; }
 
         .input-tabel { 
-            width: 38px; /* Pas dan presisi untuk angka hingga 100 */
+            width: 32px;
             margin: 0 auto;
             border: 1px solid transparent; 
             background: #fdfdfd; 
             text-align: center; 
-            font-size: 11.5px; 
+            font-size: 11px; 
             font-weight: 600; 
-            padding: 3px 0; 
+            padding: 2px 0; 
             font-family: var(--font-body); 
             border-radius: 4px; 
             transition: all 0.15s; 
@@ -303,6 +303,44 @@
         .input-tabel:hover { border-color: var(--clr-border); }
         .input-tabel:focus { background: #fffde7; outline: 2px solid var(--clr-accent); border-color: transparent; }
         .input-tabel::-webkit-inner-spin-button { display: none; }
+
+        /* --- FROZEN COLUMNS FOR NILAI TABLE (Double Freeze: Header & Name) --- */
+        .table-responsive-frozen { 
+            position: relative; 
+            overflow: auto;
+            max-height: 600px;
+        }
+        
+        .table-responsive-frozen .data-table {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        /* Freeze header horizontally & vertically */
+        .table-responsive-frozen .data-table thead {
+            position: sticky;
+            top: 0;
+            z-index: 30;
+            background: var(--clr-surface-2);
+        }
+
+        /* Freeze column 1 & 2 (NISN dan Nama) pada header */
+        .table-responsive-frozen .data-table th:nth-child(1),
+        .table-responsive-frozen .data-table th:nth-child(2) {
+            position: sticky;
+            left: 0;
+            z-index: 31;
+            background: var(--clr-surface-2);
+        }
+
+        /* Freeze column 1 & 2 pada body */
+        .table-responsive-frozen .data-table td:nth-child(1),
+        .table-responsive-frozen .data-table td:nth-child(2) {
+            position: sticky;
+            left: 0;
+            z-index: 10;
+            background: inherit;
+        }
 
         /* --- SECTION PANEL --- */
         .section-panel { background: var(--clr-surface); border: 1px solid var(--clr-border); border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow-sm); }
@@ -468,8 +506,7 @@
         <button id="btn-mapel" class="auth-req" onclick="bukaTab('tab-mapel', this)">Mata Pelajaran</button>
         <button id="btn-siswa" class="auth-req" onclick="bukaTab('tab-siswa', this)">Data Siswa</button>
         <button id="btn-nilai" class="auth-req" onclick="bukaTab('tab-nilai', this)">Input & Rekap Nilai</button>
-        <button id="btn-absensi" class="auth-req" onclick="bukaTab('tab-absensi', this)">📋 Absensi</button>
-        <button id="btn-sikap" class="auth-req" onclick="bukaTab('tab-sikap', this)">⭐ Sikap</button>
+        <button id="btn-absensi" class="auth-req" onclick="bukaTab('tab-absensi', this)">📋 Absensi & Sikap</button>
         <button id="btn-catatan" class="auth-req" onclick="bukaTab('tab-catatan', this)">📝 Catatan</button>
         <div class="nav-separator auth-req"></div>
         <button id="btn-cetak" class="auth-req btn-cetak" onclick="bukaTab('tab-cetak', this)">🖨️ Cetak Rapor</button>
@@ -495,6 +532,45 @@
             <div class="modal-footer">
                 <button class="btn-danger latin" onclick="tutupModalCatatan()">Batal</button>
                 <button class="btn-save latin" onclick="simpanCatatanModal()">💾 Simpan Catatan</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-edit-mapel" class="modal-overlay no-print">
+        <div class="modal-content">
+            <h3 class="latin">✏️ Edit Nama Mapel</h3>
+            <input type="hidden" id="edit_mapel_id">
+            <input type="hidden" id="edit_mapel_jenis">
+            <div class="form-group">
+                <label>Nama Mapel (Latin)</label>
+                <input type="text" id="edit_mapel_latin" placeholder="Nama Mapel Latin">
+            </div>
+            <div class="form-group">
+                <label>Nama Mapel (Arab)</label>
+                <input type="text" id="edit_mapel_arab" dir="rtl" class="arab" placeholder="اسم المادة">
+            </div>
+            <div class="modal-footer">
+                <button class="btn-danger latin" onclick="tutupModalEditMapel()">Batal</button>
+                <button class="btn-save latin" onclick="simpanEditMapel()">💾 Simpan Perubahan</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-edit-kategori" class="modal-overlay no-print">
+        <div class="modal-content">
+            <h3 class="latin">✏️ Edit Kategori Mapel Praktik</h3>
+            <input type="hidden" id="edit_kat_id">
+            <div class="form-group">
+                <label>Kategori (Latin)</label>
+                <input type="text" id="edit_kat_latin" placeholder="Kategori Latin">
+            </div>
+            <div class="form-group">
+                <label>Kategori (Arab)</label>
+                <input type="text" id="edit_kat_arab" dir="rtl" class="arab" placeholder="اسم الفئة">
+            </div>
+            <div class="modal-footer">
+                <button class="btn-danger latin" onclick="tutupModalEditKategori()">Batal</button>
+                <button class="btn-save latin" onclick="simpanEditKategori()">💾 Simpan Perubahan</button>
             </div>
         </div>
     </div>
@@ -567,8 +643,8 @@
                 <h3>Informasi Lembaga</h3>
                 <div class="form-group"><label>Nama Madrasah</label><input type="text" id="id_madrasah" placeholder="Contoh: Aliyah Al-Ma'tuq" value="Al Ma'tuq"></div>
                 <div class="form-group"><label>Kelas (Arab — otomatis)</label><input type="text" id="id_kelas" dir="rtl" class="arab" placeholder="الثالث -  أ" readonly style="background:#f5f5f5; cursor:not-allowed;"></div>
-                <div class="form-group"><label>Tingkat (Arab)</label>
-                    <select id="id_tingkat_arab" dir="rtl" class="arab">
+                <div class="form-group"><label>Tingkat (Arab — otomatis)</label>
+                    <select id="id_tingkat_arab" dir="rtl" class="arab" disabled style="background:#f5f5f5; cursor:not-allowed;">
                         <option value="المتوسطة">المتوسطة</option>
                         <option value="الثانوية" selected>الثانوية</option>
                     </select>
@@ -738,7 +814,7 @@
                 <input type="text" id="cari_siswa_akademik" placeholder="🔍 Cari Nama / NISN Siswa..." oninput="filterSiswa('akademik')" style="padding:6px 12px; border:1.5px solid var(--clr-border); border-radius:var(--radius-sm); width:260px; font-size:12px; font-family:var(--font-body); outline:none;">
                 <button class="btn-danger" onclick="hapusSemuaNilai('akademik')">🗑️ Hapus Semua Nilai Akademik</button>
             </div>
-            <div class="table-responsive">
+            <div class="table-responsive table-responsive-frozen">
                 <table class="data-table"><thead id="th_akademik"></thead><tbody id="tb_akademik"></tbody></table>
             </div>
         </div>
@@ -762,7 +838,7 @@
                 <input type="text" id="cari_siswa_praktik" placeholder="🔍 Cari Nama / NISN Siswa..." oninput="filterSiswa('praktik')" style="padding:6px 12px; border:1.5px solid var(--clr-border); border-radius:var(--radius-sm); width:260px; font-size:12px; font-family:var(--font-body); outline:none;">
                 <button class="btn-danger" onclick="hapusSemuaNilai('praktik')">🗑️ Hapus Semua Nilai Praktik</button>
             </div>
-            <div class="table-responsive">
+            <div class="table-responsive table-responsive-frozen">
                 <table class="data-table"><thead id="th_praktik"></thead><tbody id="tb_praktik"></tbody></table>
             </div>
         </div>
@@ -774,10 +850,10 @@
     <!-- TAB ABSENSI -->
     <!-- ============================================================ -->
     <div id="tab-absensi" class="tab-content latin">
-        <h2>📋 Absensi Siswa</h2>
+        <h2>📋 Absensi & Sikap</h2>
         <div class="info-tip" style="margin-bottom:16px;" id="info-absensi-kelas">ℹ️ Silakan pilih kelas terlebih dahulu di tab <b>Identitas & Kelas</b>.</div>
         <div class="card">
-            <h3>Input Absensi</h3>
+            <h3>Input Absensi & Kepribadian</h3>
             <div style="margin-bottom:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
                 <button class="btn-excel" style="width:auto; margin:0;" onclick="downloadTemplate('absensi')">📥 Download Template Absensi</button>
                 <div style="display:flex; gap:8px; align-items:center;">
@@ -785,10 +861,11 @@
                     <button class="btn-save" onclick="importAbsensiExcel()">⬆️ Upload Excel Absensi</button>
                 </div>
             </div>
+            <p style="font-size:13px; color:var(--clr-text-muted); margin-bottom:12px;">Format Kepribadian: A (Sangat Baik), B (Baik), C (Cukup), D (Kurang)</p>
             <div class="table-responsive">
                 <table class="data-table">
                     <thead id="th_absensi_tab">
-                        <tr><th>NISN</th><th>Nama</th><th>Sakit (hari)</th><th>Izin (hari)</th><th>Alfa (hari)</th><th>Naik Kelas</th></tr>
+                        <tr><th>NISN</th><th>Nama</th><th>Sakit</th><th>Izin</th><th>Alfa</th><th>Kepribadian</th></tr>
                     </thead>
                     <tbody id="tb_absensi_tab"></tbody>
                 </table>
@@ -1231,13 +1308,6 @@ function tambahKategoriPraktik() {
     document.getElementById('kat_pr_arab').value = '';
     saveData(); renderKategoriPraktik(); showToast('✅ Kategori ditambahkan.');
 }
-function editKategoriPraktik(id) {
-    let k = db.kategori_praktik.find(x => x.id === id); if (!k) return;
-    let l = prompt('Edit Nama Kategori (Latin):', k.latin); if (!l || !l.trim()) return;
-    let a = prompt('Edit Nama Kategori (Arab):', k.arab); if (a === null) return;
-    k.latin = l; k.arab = a;
-    saveData(); renderKategoriPraktik(); hitungDanRenderRekap('praktik'); showToast('✅ Kategori diperbarui!');
-}
 function hapusKategoriPraktik(id) {
     if (db.mapel.praktik.find(m => m.kategori === id)) return alert('Kategori ini digunakan oleh Sub-Mapel.');
     if (confirm('Hapus kategori ini?')) {
@@ -1322,11 +1392,74 @@ function hapusMapel(jenis, id) {
     }
 }
 function editMapel(jenis, id) {
-    let m = db.mapel[jenis].find(x => x.id === id); if (!m) return;
-    let l = prompt('Edit Nama Mapel (Latin):', m.latin); if (!l || !l.trim()) return;
-    let a = prompt('Edit Nama Mapel (Arab):', m.arab); if (a === null) return;
-    m.latin = l; m.arab = a;
-    saveData(); renderMapel(); showToast('✅ Mapel diperbarui!');
+    let m = db.mapel[jenis].find(x => x.id === id); 
+    if (!m) return;
+    document.getElementById('edit_mapel_id').value = id;
+    document.getElementById('edit_mapel_jenis').value = jenis;
+    document.getElementById('edit_mapel_latin').value = m.latin;
+    document.getElementById('edit_mapel_arab').value = m.arab;
+    document.getElementById('modal-edit-mapel').style.display = 'flex';
+}
+
+function tutupModalEditMapel() {
+    document.getElementById('modal-edit-mapel').style.display = 'none';
+}
+
+function simpanEditMapel() {
+    let id = document.getElementById('edit_mapel_id').value;
+    let jenis = document.getElementById('edit_mapel_jenis').value;
+    let latin = document.getElementById('edit_mapel_latin').value.trim();
+    let arab = document.getElementById('edit_mapel_arab').value.trim();
+    
+    if (!latin) { alert('Nama Mapel (Latin) tidak boleh kosong!'); return; }
+    
+    let m = db.mapel[jenis].find(x => x.id === id);
+    if (m) {
+        m.latin = latin;
+        m.arab = arab;
+        saveData();
+        renderMapel();
+        hitungDanRenderRekap('akademik');
+        hitungDanRenderRekap('praktik');
+        showToast('✅ Mapel berhasil diperbarui!');
+        tutupModalEditMapel();
+    }
+}
+
+// ============================================================
+// KATEGORI MAPEL PRAKTIK - EDIT VIA MODAL
+// ============================================================
+function editKategoriPraktik(id) {
+    let k = db.kategori_praktik.find(x => x.id === id);
+    if (!k) return;
+    
+    document.getElementById('edit_kat_id').value = id;
+    document.getElementById('edit_kat_latin').value = k.latin;
+    document.getElementById('edit_kat_arab').value = k.arab || '';
+    document.getElementById('modal-edit-kategori').style.display = 'flex';
+}
+
+function tutupModalEditKategori() {
+    document.getElementById('modal-edit-kategori').style.display = 'none';
+}
+
+function simpanEditKategori() {
+    let id = document.getElementById('edit_kat_id').value;
+    let latin = document.getElementById('edit_kat_latin').value.trim();
+    let arab = document.getElementById('edit_kat_arab').value.trim();
+    
+    if (!latin) { alert('Kategori (Latin) tidak boleh kosong!'); return; }
+    
+    let k = db.kategori_praktik.find(x => x.id === id);
+    if (k) {
+        k.latin = latin;
+        k.arab = arab;
+        saveData();
+        renderKategoriPraktik();
+        hitungDanRenderRekap('praktik');
+        showToast('✅ Kategori berhasil diperbarui!');
+        tutupModalEditKategori();
+    }
 }
 function geserMapelAkademik(idx, arah) {
     if (idx + arah < 0 || idx + arah >= db.mapel.akademik.length) return;
@@ -1726,15 +1859,11 @@ function hitungDanRenderRekap(jenis) {
         tbody.innerHTML = '<tr><td colspan="5" style="padding:20px; color:var(--clr-text-faint);">Belum ada mapel.</td></tr>';
         return;
     }
-    let allChecked = db.siswa.length>0 && db.siswa.every(s => { let a = db.absensi[s.nisn]||{}; return a.naik!==false; });
     let thHTML = '';
     if (jenis==='akademik') {
         thHTML = `<tr><th>NISN</th><th>Nama</th>`;
-        db.mapel.akademik.forEach(m => thHTML += `<th style="white-space:nowrap;">${m.latin}<br><span class="arab" style="font-weight:normal;">${m.arab}</span></th>`);
-        thHTML += `<th>Sakit</th><th>Izin</th><th>Alfa</th><th>Sikap</th><th style="white-space:nowrap;">Total</th><th>Rata</th><th>Predikat</th><th>Ranking</th>
-            <th><label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;">
-                <input type="checkbox" ${allChecked?'checked':''} onchange="toggleSemuaNaik(this.checked)"> Naik</label></th>
-            <th>Catatan</th></tr>`;
+        db.mapel.akademik.forEach(m => thHTML += `<th style="white-space:nowrap; font-size:11px;">${m.latin}<br><span class="arab" style="font-weight:normal;">${m.arab}</span></th>`);
+        thHTML += `<th style="white-space:nowrap;">Total</th><th>Rata</th><th>Predikat</th><th>Rank</th></tr>`;
     } else {
         // Build two-row header: row 1 = kategori (Arab + Latin), row 2 = sub-mapel
         let thRow1 = `<tr><th rowspan="2">NISN</th><th rowspan="2">Nama</th>`;
@@ -1753,7 +1882,7 @@ function hitungDanRenderRekap(jenis) {
             thRow1 += `<th colspan="${unass.length}" style="background:var(--clr-accent-light);">Lainnya</th>`;
             unass.forEach(m => thRow2 += `<th style="white-space:nowrap; font-size:11px;">${m.latin}<br><span class="arab" style="font-weight:normal;font-size:0.9em;">${m.arab||''}</span></th>`);
         }
-        thRow1 += `<th rowspan="2">Total</th><th rowspan="2">Rata</th><th rowspan="2">Predikat</th><th rowspan="2">Ranking</th></tr>`;
+        thRow1 += `<th rowspan="2">Total</th><th rowspan="2">Rata</th><th rowspan="2">Predikat</th><th rowspan="2">Rank</th></tr>`;
         thRow2 += `</tr>`;
         thHTML = thRow1 + thRow2;
     }
@@ -1792,35 +1921,20 @@ function hitungDanRenderRekap(jenis) {
     mappedData.forEach((d, rowIdx) => {
         let cNaik = d.naik ? '' : 'style="background:var(--clr-danger-light);"';
         trHTML += `<tr ${cNaik}>`;
-        trHTML += `<td>${d.nisn}</td><td style="text-align:left; white-space:nowrap;">${d.nama}</td>`;
+        trHTML += `<td style="min-width:70px;">${d.nisn}</td><td style="text-align:left; white-space:nowrap; min-width:150px;">${d.nama}</td>`;
         d.orderedMapels.forEach((m, i) => {
             let rawV = db.nilai[jenis][d.nisn] ? db.nilai[jenis][d.nisn][m.id] : '';
             let curV = (rawV!==undefined && rawV!==null && rawV!=='') ? rawV : '';
             let cMerah = (curV!=='' && parseFloat(curV)<65) ? 'color:red;' : '';
-            trHTML += `<td><input type="number" class="input-tabel" value="${curV}" style="${cMerah}min-width:48px; max-width:60px;" 
+            trHTML += `<td style="padding:2px;"><input type="number" class="input-tabel" value="${curV}" style="${cMerah}" 
                 min="0" max="100" step="0.5"
                 oninput="updateNilaiLangsung('${d.nisn}','${m.id}','${jenis}',this)"></td>`;
         });
-        if (jenis==='akademik') {
-            let abs = db.absensi[d.nisn]||{sakit:0,izin:0,alfa:0,sikap:'B',naik:true};
-            trHTML += `<td><input type="number" class="input-tabel" value="${abs.sakit||0}" style="width:42px;" min="0" oninput="updateAbsensiLangsung('${d.nisn}','sakit',this)"></td>`;
-            trHTML += `<td><input type="number" class="input-tabel" value="${abs.izin||0}" style="width:42px;" min="0" oninput="updateAbsensiLangsung('${d.nisn}','izin',this)"></td>`;
-            trHTML += `<td><input type="number" class="input-tabel" value="${abs.alfa||0}" style="width:42px;" min="0" oninput="updateAbsensiLangsung('${d.nisn}','alfa',this)"></td>`;
-            trHTML += `<td><input type="text" class="input-tabel" value="${abs.sikap||'B'}" style="width:36px; text-transform:uppercase;" maxlength="2" oninput="updateAbsensiLangsung('${d.nisn}','sikap',this)"></td>`;
-            let cPred = d.pred==='راسب' ? 'color:red;font-weight:bold;' : 'color:var(--clr-success);font-weight:bold;';
-            trHTML += `<td class="latin" style="white-space:nowrap;"><b>${d.total}</b></td>
-                <td class="latin" style="white-space:nowrap;"><b>${d.rata}</b></td>
-                <td class="arab" dir="rtl" style="${cPred} white-space:nowrap;">${d.pred}</td>
-                <td class="latin" style="white-space:nowrap;"><b>${db.nilai[jenis][d.nisn].kalkulasi.rankFull}</b></td>`;
-            trHTML += `<td><input type="checkbox" ${d.naik?'checked':''} title="Naik Kelas" onchange="updateAbsensiLangsung('${d.nisn}','naik',this)"></td>`;
-            trHTML += `<td><button class="btn-action latin" style="padding:3px 6px; font-size:10.5px; background:var(--clr-primary-light); color:var(--clr-primary-dark); border:1px solid var(--clr-primary);" onclick="editCatatan('${d.nisn}')">📝 Catatan</button></td>`;
-        } else {
-            let cPred = d.pred==='راسب' ? 'color:red;font-weight:bold;' : 'color:var(--clr-success);font-weight:bold;';
-            trHTML += `<td class="latin" style="white-space:nowrap;"><b>${d.total}</b></td>
-                <td class="latin" style="white-space:nowrap;"><b>${d.rata}</b></td>
-                <td class="arab" dir="rtl" style="${cPred} white-space:nowrap;">${d.pred}</td>
-                <td class="latin" style="white-space:nowrap;"><b>${db.nilai[jenis][d.nisn].kalkulasi.rankFull}</b></td>`;
-        }
+        let cPred = d.pred==='راسب' ? 'color:red;font-weight:bold;' : 'color:var(--clr-success);font-weight:bold;';
+        trHTML += `<td class="latin" style="white-space:nowrap; padding:4px;"><b>${d.total}</b></td>
+            <td class="latin" style="white-space:nowrap; padding:4px;"><b>${d.rata}</b></td>
+            <td class="arab" dir="rtl" style="${cPred} white-space:nowrap; padding:4px;">${d.pred}</td>
+            <td class="latin" style="white-space:nowrap; padding:4px;"><b>${db.nilai[jenis][d.nisn].kalkulasi.rankFull}</b></td>`;
         trHTML += '</tr>';
     });
     tbody.innerHTML = trHTML;
@@ -1845,20 +1959,25 @@ function renderAbsensiTab() {
     let trHTML = '';
     db.siswa.forEach((s, i) => {
         let abs = db.absensi[s.nisn] || {sakit:0, izin:0, alfa:0, sikap:'B', naik:true, catatan:''};
-        let cNaik = abs.naik !== false ? '' : 'style="background:var(--clr-danger-light);"';
-        trHTML += `<tr ${cNaik}>
-            <td>${s.nisn}</td>
-            <td style="text-align:left; white-space:nowrap;">${s.nama}</td>
-            <td><input type="number" class="input-tabel" value="${abs.sakit||0}" style="width:55px;" min="0"
+        let sikap = abs.sikap || 'B';
+        trHTML += `<tr>
+            <td style="min-width:70px;">${s.nisn}</td>
+            <td style="text-align:left; white-space:nowrap; min-width:130px;">${s.nama}</td>
+            <td style="padding:2px;"><input type="number" class="input-tabel" value="${abs.sakit||0}" min="0"
                 oninput="updateAbsensiLangsung('${s.nisn}','sakit',this); renderAbsensiTab()"></td>
-            <td><input type="number" class="input-tabel" value="${abs.izin||0}" style="width:55px;" min="0"
+            <td style="padding:2px;"><input type="number" class="input-tabel" value="${abs.izin||0}" min="0"
                 oninput="updateAbsensiLangsung('${s.nisn}','izin',this); renderAbsensiTab()"></td>
-            <td><input type="number" class="input-tabel" value="${abs.alfa||0}" style="width:55px;" min="0"
+            <td style="padding:2px;"><input type="number" class="input-tabel" value="${abs.alfa||0}" min="0"
                 oninput="updateAbsensiLangsung('${s.nisn}','alfa',this); renderAbsensiTab()"></td>
-            <td><label style="display:flex;align-items:center;gap:4px;justify-content:center;cursor:pointer;">
-                <input type="checkbox" ${abs.naik!==false?'checked':''} 
-                    onchange="updateAbsensiLangsung('${s.nisn}','naik',this); renderAbsensiTab()"> Naik
-            </label></td>
+            <td style="padding:2px;">
+                <select style="width:80px; padding:4px; font-size:11px; border:1px solid var(--clr-border); border-radius:4px;"
+                    onchange="updateAbsensiLangsung('${s.nisn}','sikap',this); renderAbsensiTab()">
+                    <option value="A" ${sikap==='A'?'selected':''}>A</option>
+                    <option value="B" ${sikap==='B'?'selected':''}>B</option>
+                    <option value="C" ${sikap==='C'?'selected':''}>C</option>
+                    <option value="D" ${sikap==='D'?'selected':''}>D</option>
+                </select>
+            </td>
         </tr>`;
     });
     document.getElementById('tb_absensi_tab').innerHTML = trHTML;
