@@ -554,7 +554,7 @@
     <div class="app-header no-print">
         <div class="app-header-title">
             Aplikasi Rapor 5.0
-            <span>Pesantren Al Ma'tuq</span>
+            <span>PESANTREN AL- MA'TUQ</span>
         </div>
         <div style="font-size:12px; opacity:0.55; font-weight:400;">Data tersimpan di perangkat ini</div>
     </div>
@@ -675,7 +675,7 @@
         <div class="grid-2 latin">
             <div class="section-panel panel-primary">
                 <h3>Selamat Datang di Aplikasi Rapor v5.0</h3>
-                <p>Aplikasi ini dirancang khusus untuk Rapor Pesantren Al Ma'tuq dengan data siswa yang sudah tertanam langsung di aplikasi. Wali kelas cukup memilih kelas untuk langsung mengakses daftar siswa.</p>
+                <p>Aplikasi ini dirancang khusus untuk Pesantren Al Ma'tuq dengan data siswa yang sudah tertanam langsung di aplikasi. Wali kelas cukup memilih kelas untuk langsung mengakses daftar siswa.</p>
                 <div class="info-tip" style="margin-bottom:15px;">
                     💡 Silakan <b>Login</b> terlebih dahulu melalui tombol di pojok kanan atas untuk membuka fitur-fitur aplikasi.
                 </div>
@@ -1863,7 +1863,12 @@ function setupPasteHandler(jenis) {
         e.preventDefault();
         let clipboardData = (e.clipboardData || window.clipboardData);
         let pastedText = clipboardData.getData('text');
-        let rows = pastedText.split('\n').filter(r => r.trim());
+        // Normalize line endings, then split. Do NOT filter out empty rows
+        // (filtering shifts subsequent rows upward and misaligns data).
+        let rows = pastedText.replace(/\r/g, '').split('\n');
+        // Remove only a possible trailing empty line caused by copying with a final newline
+        if (rows.length > 1 && rows[rows.length - 1] === '') rows.pop();
+
         let targetCell = document.activeElement;
         if (!targetCell || targetCell.tagName !== 'INPUT') return;
         let inputParent = targetCell.closest('td');
@@ -1877,6 +1882,7 @@ function setupPasteHandler(jenis) {
         // Collect all (nisn, mapelId, value) to save at once
         let toSave = [];
         rows.forEach((row, rowIdx) => {
+            // Keep all columns including empty ones (do NOT trim away empty trailing cells)
             let values = row.split('\t').map(v => v.trim());
             let targetRowIdx = currentRowIndex + rowIdx;
             if (targetRowIdx >= allRows.length) return;
@@ -1888,7 +1894,7 @@ function setupPasteHandler(jenis) {
                 if (targetCellIdx >= targetCells.length) return;
                 let inp = targetCells[targetCellIdx].querySelector('input[type="text"], input[type="number"]');
                 if (inp) {
-                    // Only accept valid numbers
+                    // Only accept valid numbers; empty stays empty (no shifting)
                     let cleaned = value.replace(/[^0-9.]/g, '');
                     inp.value = cleaned;
                     inp.style.color = (cleaned !== '' && parseFloat(cleaned) < 65) ? 'red' : 'inherit';
@@ -1926,6 +1932,7 @@ function updateAbsensiLangsung(nisn, key, el) {
     if (!db.absensi[nisn]) db.absensi[nisn] = {sakit:0,izin:0,alfa:0,sikap:'B',catatan:'',naik:true};
     let val = el.type==='checkbox' ? el.checked : el.value;
     if (key==='sikap') val = val.toUpperCase();
+    if ((key==='sakit'||key==='izin'||key==='alfa') && val === '') val = '-';
     db.absensi[nisn][key] = val;
     saveData();
     if (key==='naik'||key==='alfa') hitungDanRenderRekap('akademik');
@@ -2183,14 +2190,14 @@ function renderAbsensiTab() {
         trHTML += `<tr>
             <td style="min-width:70px;">${s.nisn}</td>
             <td style="text-align:left; white-space:nowrap; min-width:130px;">${s.nama}</td>
-            <td style="padding:2px; min-width:75px; text-align:center;"><input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" class="input-tabel" value="${abs.sakit||0}" style="width:65px;"
-                oninput="this.value=this.value.replace(/[^0-9]/g,'');"
+            <td style="padding:2px; min-width:75px; text-align:center;"><input type="text" inputmode="numeric" pattern="[0-9\\-]*" maxlength="2" class="input-tabel" value="${abs.sakit!==undefined && abs.sakit!==null && abs.sakit!=='' ? abs.sakit : 0}" style="width:65px;"
+                oninput="this.value=this.value.replace(/[^0-9\\-]/g,'');"
                 onchange="updateAbsensiLangsung('${s.nisn}','sakit',this); renderAbsensiTab()"></td>
-            <td style="padding:2px; min-width:75px; text-align:center;"><input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" class="input-tabel" value="${abs.izin||0}" style="width:65px;"
-                oninput="this.value=this.value.replace(/[^0-9]/g,'');"
+            <td style="padding:2px; min-width:75px; text-align:center;"><input type="text" inputmode="numeric" pattern="[0-9\\-]*" maxlength="2" class="input-tabel" value="${abs.izin!==undefined && abs.izin!==null && abs.izin!=='' ? abs.izin : 0}" style="width:65px;"
+                oninput="this.value=this.value.replace(/[^0-9\\-]/g,'');"
                 onchange="updateAbsensiLangsung('${s.nisn}','izin',this); renderAbsensiTab()"></td>
-            <td style="padding:2px; min-width:75px; text-align:center;"><input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" class="input-tabel" value="${abs.alfa||0}" style="width:65px;"
-                oninput="this.value=this.value.replace(/[^0-9]/g,'');"
+            <td style="padding:2px; min-width:75px; text-align:center;"><input type="text" inputmode="numeric" pattern="[0-9\\-]*" maxlength="2" class="input-tabel" value="${abs.alfa!==undefined && abs.alfa!==null && abs.alfa!=='' ? abs.alfa : 0}" style="width:65px;"
+                oninput="this.value=this.value.replace(/[^0-9\\-]/g,'');"
                 onchange="updateAbsensiLangsung('${s.nisn}','alfa',this); renderAbsensiTab()"></td>
             <td style="padding:2px;">
                 <select style="width:80px; padding:4px; font-size:11px; border:1px solid var(--clr-border); border-radius:4px;"
@@ -2206,54 +2213,84 @@ function renderAbsensiTab() {
     document.getElementById('tb_absensi_tab').innerHTML = trHTML;
     
     // Setup paste handler for absensi columns (sakit, izin, alfa, sikap)
-    let absensiTbody = document.getElementById('tb_absensi_tab');
-    if (absensiTbody) {
-        absensiTbody.addEventListener('paste', function(e) {
-            e.preventDefault();
-            let clipboardData = (e.clipboardData || window.clipboardData);
-            let pastedText = clipboardData.getData('text');
-            let rows = pastedText.split('\n').filter(r => r.trim());
-            let targetCell = document.activeElement;
-            
-            if (!targetCell || (targetCell.tagName !== 'INPUT' && targetCell.tagName !== 'SELECT')) return;
-            
-            let inputParent = targetCell.closest('td');
-            if (!inputParent) return;
-            
-            let currentRow = inputParent.closest('tr');
-            let allRows = Array.from(absensiTbody.getElementsByTagName('tr'));
-            let currentRowIndex = allRows.indexOf(currentRow);
-            let startCellIndex = Array.from(currentRow.getElementsByTagName('td')).indexOf(inputParent);
-            
-            // Paste values
-            rows.forEach((row, rowIdx) => {
-                let values = row.split('\t').map(v => v.trim());
-                let targetRowIdx = currentRowIndex + rowIdx;
-                if (targetRowIdx >= allRows.length) return;
-                
-                let targetRow = allRows[targetRowIdx];
-                let targetCells = Array.from(targetRow.getElementsByTagName('td'));
-                
-                values.forEach((value, colIdx) => {
-                    let targetCellIdx = startCellIndex + colIdx;
-                    if (targetCellIdx >= targetCells.length) return;
-                    
-                    let targetInput = targetCells[targetCellIdx].querySelector('input');
-                    let targetSelect = targetCells[targetCellIdx].querySelector('select');
-                    
-                    if (targetInput) {
-                        targetInput.value = value;
-                        let event = new Event('change', { bubbles: true });
-                        targetInput.dispatchEvent(event);
-                    } else if (targetSelect) {
-                        targetSelect.value = value.toUpperCase();
-                        let event = new Event('change', { bubbles: true });
-                        targetSelect.dispatchEvent(event);
+    setupAbsensiPasteHandler();
+}
+
+function setupAbsensiPasteHandler() {
+    let tbody = document.getElementById('tb_absensi_tab');
+    if (!tbody) return;
+    // Remove old listener to avoid stacking duplicates across re-renders
+    let newTbody = tbody.cloneNode(true);
+    tbody.parentNode.replaceChild(newTbody, tbody);
+
+    // Column index (within <td> list) -> absensi key. Col 0=NISN, 1=Nama, 2=Sakit, 3=Izin, 4=Alfa, 5=Sikap
+    const COL_KEY = { 2: 'sakit', 3: 'izin', 4: 'alfa', 5: 'sikap' };
+
+    newTbody.addEventListener('paste', function(e) {
+        e.preventDefault();
+        let clipboardData = (e.clipboardData || window.clipboardData);
+        let pastedText = clipboardData.getData('text');
+        // Normalize line endings, keep empty rows/cells to preserve positional alignment
+        let rows = pastedText.replace(/\r/g, '').split('\n');
+        if (rows.length > 1 && rows[rows.length - 1] === '') rows.pop();
+
+        let targetCell = document.activeElement;
+        if (!targetCell || (targetCell.tagName !== 'INPUT' && targetCell.tagName !== 'SELECT')) return;
+
+        let inputParent = targetCell.closest('td');
+        if (!inputParent) return;
+
+        let currentRow = inputParent.closest('tr');
+        let allRows = Array.from(newTbody.getElementsByTagName('tr'));
+        let currentRowIndex = allRows.indexOf(currentRow);
+        let startCellIndex = Array.from(currentRow.getElementsByTagName('td')).indexOf(inputParent);
+
+        let anyChange = false;
+        rows.forEach((row, rowIdx) => {
+            let values = row.split('\t').map(v => v.trim());
+            let targetRowIdx = currentRowIndex + rowIdx;
+            if (targetRowIdx >= allRows.length) return;
+
+            let targetRow = allRows[targetRowIdx];
+            let targetCells = Array.from(targetRow.getElementsByTagName('td'));
+            let nisn = (targetCells[0] && targetCells[0].textContent.trim()) || '';
+            if (!nisn) return;
+            if (!db.absensi[nisn]) db.absensi[nisn] = {sakit:0, izin:0, alfa:0, sikap:'B', catatan:'', naik:true};
+
+            values.forEach((value, colIdx) => {
+                let targetCellIdx = startCellIndex + colIdx;
+                if (targetCellIdx >= targetCells.length) return;
+                let key = COL_KEY[targetCellIdx];
+                if (!key) return;
+
+                if (key === 'sikap') {
+                    if (value !== '') {
+                        let v = value.toUpperCase();
+                        if (['A','B','C','D'].includes(v)) {
+                            db.absensi[nisn].sikap = v;
+                            anyChange = true;
+                        }
                     }
-                });
+                } else {
+                    // Empty source cell -> strip "-" (jangan dikosongkan / jangan menaikkan data lain)
+                    let cleaned;
+                    if (value === '') cleaned = '-';
+                    else {
+                        cleaned = value.replace(/[^0-9\-]/g, '');
+                        if (cleaned === '') cleaned = '-';
+                    }
+                    db.absensi[nisn][key] = cleaned;
+                    anyChange = true;
+                }
             });
         });
-    }
+
+        if (anyChange) {
+            saveData();
+            renderAbsensiTab();
+            hitungDanRenderRekap('akademik');
+        }
+    });
 }
 
 // ============================================================
