@@ -761,7 +761,7 @@
         <div class="grid-2 latin">
             <div class="section-panel panel-primary">
                 <h3>Informasi Lembaga</h3>
-                <div class="form-group"><label>Nama Madrasah</label><input type="text" id="id_madrasah" placeholder="Contoh: Aliyah Al-Ma'tuq" value="Al Ma'tuq"></div>
+                <div class="form-group"><label>Nama Madrasah</label><input type="text" id="id_madrasah" placeholder="Contoh: Aliyah Al-Ma'tuq" value="Al Ma'tuq" oninput="autoSimpanIdentitas()"></div>
                 <div class="form-group"><label>Kelas (Arab — otomatis)</label><input type="text" id="id_kelas" dir="rtl" class="arab" placeholder="الثالث -  أ" readonly style="background:#f5f5f5; cursor:not-allowed;"></div>
                 <div class="form-group"><label>Tingkat (Arab — otomatis)</label>
                     <select id="id_tingkat_arab" dir="rtl" class="arab" disabled style="background:#f5f5f5; cursor:not-allowed;">
@@ -770,14 +770,14 @@
                     </select>
                 </div>
                 <hr class="section-divider">
-                <div class="form-group"><label>Kepala Madrasah</label><input type="text" id="id_kepala" dir="rtl" class="arab" placeholder="tulis dalam bahasa arab"></div>
+                <div class="form-group"><label>Kepala Madrasah</label><input type="text" id="id_kepala" dir="rtl" class="arab" placeholder="tulis dalam bahasa arab" oninput="autoSimpanIdentitas()"></div>
             </div>
             <div class="section-panel panel-accent">
                 <h3>Waktu & Penandatangan</h3>
-                <div class="form-group"><label>Tahun Pelajaran</label><input type="text" id="id_tapel" placeholder="Contoh: 1446 - 1447 H / 2025 - 2026 M"></div>
+                <div class="form-group"><label>Tahun Pelajaran</label><input type="text" id="id_tapel" placeholder="Contoh: 1446 - 1447 H / 2025 - 2026 M" oninput="autoSimpanIdentitas()"></div>
                 <div class="grid-2" style="gap:10px;">
                     <div class="form-group" style="margin:0;"><label>Semester (Arab)</label>
-                        <select id="id_semester_arab" dir="rtl" class="arab">
+                        <select id="id_semester_arab" dir="rtl" class="arab" onchange="autoSimpanIdentitas()">
                             <option value="الأول">الأول</option>
                             <option value="الثاني">الثاني</option>
                         </select>
@@ -789,16 +789,16 @@
                         </select>
                     </div>
                 </div>
-                <div class="form-group"><label>Tempat Rapor (Kota)</label><input type="text" id="id_tempat" placeholder="Contoh: Sukabumi" value="Sukabumi"></div>
+                <div class="form-group"><label>Tempat Rapor (Kota)</label><input type="text" id="id_tempat" placeholder="Contoh: Sukabumi" value="Sukabumi" oninput="autoSimpanIdentitas()"></div>
                 <div class="grid-2" style="gap:10px;">
-                    <div class="form-group" style="margin:0;"><label>Tgl Hijriyah</label><input type="text" id="id_tgl_hijriyah" placeholder="Contoh: 01 Syawal 1447 H"></div>
-                    <div class="form-group" style="margin:0;"><label>Tgl Masehi</label><input type="text" id="id_tgl_masehi" placeholder="Contoh: 01 April 2026 M"></div>
+                    <div class="form-group" style="margin:0;"><label>Tgl Hijriyah</label><input type="text" id="id_tgl_hijriyah" placeholder="Contoh: 01 Syawal 1447 H" oninput="autoSimpanIdentitas()"></div>
+                    <div class="form-group" style="margin:0;"><label>Tgl Masehi</label><input type="text" id="id_tgl_masehi" placeholder="Contoh: 01 April 2026 M" oninput="autoSimpanIdentitas()"></div>
                 </div>
                 <hr class="section-divider">
                 <div class="grid-2" style="gap:10px;">
-                    <div class="form-group" style="margin:0;"><label>Wali Kelas</label><input type="text" id="id_wali" dir="rtl" class="arab" placeholder="tulis dalam bahasa arab"></div>
+                    <div class="form-group" style="margin:0;"><label>Wali Kelas</label><input type="text" id="id_wali" dir="rtl" class="arab" placeholder="tulis dalam bahasa arab" oninput="autoSimpanIdentitas()"></div>
                     <div class="form-group" style="margin:0;"><label>Jk Wali Kelas</label>
-                        <select id="id_jk_wali"><option value="L">Laki-laki (L)</option><option value="P">Perempuan (P)</option></select>
+                        <select id="id_jk_wali" onchange="autoSimpanIdentitas()"><option value="L">Laki-laki (L)</option><option value="P">Perempuan (P)</option></select>
                     </div>
                 </div>
             </div>
@@ -1039,9 +1039,34 @@
         <div class="card" id="card_bulk_naik" style="display:none; margin-bottom:16px;">
             <h3>🎓 Aksi Kenaikan Kelas (Massal)</h3>
             <p style="font-size:13px; color:var(--clr-text-muted); margin-bottom:12px;">Atur status kenaikan kelas untuk <b>seluruh siswa sekaligus</b> tanpa harus satu per satu. Anda tetap bisa mengubah status per-siswa secara individual lewat tombol Edit di tabel bawah.</p>
-            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;">
                 <button class="btn-save" style="background:#2d6a4f;" onclick="toggleSemuaNaik(true)">✅ Naikkan Semua Siswa</button>
                 <button class="btn-danger" onclick="toggleSemuaNaik(false)">❌ Tidak Naikkan Semua Siswa</button>
+            </div>
+            <div id="catatan_genap_kelas" class="grid-2" style="gap:10px; margin-top:6px;">
+                <div class="form-group" style="margin:0;"><label>Kelas Tujuan (Jika NAIK)</label>
+                    <select id="c_kelas_naik" onchange="simpanKelasNaikTinggal(); previewRapor();" style="width:100%; padding:7px; border:1.5px solid var(--clr-border); border-radius:var(--radius-sm); font-size:13px;">
+                        <option value="">-- Pilih Kelas --</option>
+                        <option value="2 MTs">2 MTs</option>
+                        <option value="3 MTs">3 MTs</option>
+                        <option value="1 MA">1 MA</option>
+                        <option value="2 MA">2 MA</option>
+                        <option value="3 MA">3 MA</option>
+                        <option value="Lulus">Lulus</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin:0;"><label>Kelas Saat Ini (Jika TINGGAL)</label>
+                    <select id="c_kelas_tinggal" onchange="simpanKelasNaikTinggal(); previewRapor();" style="width:100%; padding:7px; border:1.5px solid var(--clr-border); border-radius:var(--radius-sm); font-size:13px;">
+                        <option value="">-- Pilih Kelas --</option>
+                        <option value="1 MTs">1 MTs</option>
+                        <option value="2 MTs">2 MTs</option>
+                        <option value="3 MTs">3 MTs</option>
+                        <option value="1 MA">1 MA</option>
+                        <option value="2 MA">2 MA</option>
+                        <option value="3 MA">3 MA</option>
+                        <option value="Tidak Lulus">Tidak Lulus</option>
+                    </select>
+                </div>
             </div>
         </div>
 
@@ -1098,31 +1123,6 @@
             <div style="border-top:1px solid var(--clr-border-soft); padding-top:16px;">
                 <div class="grid-2" style="align-items:start;">
                     <div>
-                        <div id="genap_options" style="display:none;" class="grid-2">
-                            <div class="form-group" style="margin:0;"><label>Kelas Tujuan (Jika NAIK)</label>
-                                <select id="c_kelas_naik" onchange="previewRapor()" style="width:100%; padding:7px; border:1.5px solid var(--clr-border); border-radius:var(--radius-sm); font-size:13px;">
-                                    <option value="">-- Pilih Kelas --</option>
-                                    <option value="2 MTs">2 MTs</option>
-                                    <option value="3 MTs">3 MTs</option>
-                                    <option value="1 MA">1 MA</option>
-                                    <option value="2 MA">2 MA</option>
-                                    <option value="3 MA">3 MA</option>
-                                    <option value="Lulus">Lulus</option>
-                                </select>
-                            </div>
-                            <div class="form-group" style="margin:0;"><label>Kelas Saat Ini (Jika TINGGAL)</label>
-                                <select id="c_kelas_tinggal" onchange="previewRapor()" style="width:100%; padding:7px; border:1.5px solid var(--clr-border); border-radius:var(--radius-sm); font-size:13px;">
-                                    <option value="">-- Pilih Kelas --</option>
-                                    <option value="1 MTs">1 MTs</option>
-                                    <option value="2 MTs">2 MTs</option>
-                                    <option value="3 MTs">3 MTs</option>
-                                    <option value="1 MA">1 MA</option>
-                                    <option value="2 MA">2 MA</option>
-                                    <option value="3 MA">3 MA</option>
-                                    <option value="Tidak Lulus">Tidak Lulus</option>
-                                </select>
-                            </div>
-                        </div>
                         <input type="hidden" id="c_is_genap" value="0">
                     </div>
                     <div>
@@ -1570,6 +1570,14 @@ function loadIdentitasForm() {
     // Sync semester state (show/hide kotak keputusan)
     onSemesterChange();
 }
+// Auto-save identitas tanpa perlu klik tombol Simpan
+function autoSimpanIdentitas() {
+    simpanIdentitas();
+    // Refresh preview rapor jika ada siswa yang sudah dipilih
+    let el = document.getElementById('c_pilih_siswa');
+    if (el && el.value) previewRapor();
+}
+
 function simpanIdentitas() {
     let elNaik = document.getElementById('c_kelas_naik');
     let elTinggal = document.getElementById('c_kelas_tinggal');
@@ -2177,8 +2185,8 @@ function hitungDanRenderRekap(jenis) {
             let items = db.mapel.praktik.filter(m => m.kategori===kat.id);
             if (items.length > 0) {
                 let katArab = kat.arab ? kat.arab : '';
-                let katLabel = katArab ? `<span class="arab" dir="rtl" style="font-size:1.1em;display:block;">${katArab}</span><span class="latin" style="font-size:0.85em;">${kat.latin}</span>` : kat.latin;
-                thRow1 += `<th colspan="${items.length}" style="background:var(--clr-primary-light); color:var(--clr-primary-dark); text-align:center;">${katLabel}</th>`;
+                let katLabel = katArab ? `<span class="arab" dir="rtl" style="font-size:1.1em;display:block;white-space:normal;word-break:break-word;">${katArab}</span><span class="latin" style="font-size:0.85em;white-space:normal;word-break:break-word;">${kat.latin}</span>` : `<span style="white-space:normal;word-break:break-word;">${kat.latin}</span>`;
+                thRow1 += `<th colspan="${items.length}" style="background:var(--clr-primary-light); color:var(--clr-primary-dark); text-align:center; white-space:normal; word-break:break-word; max-width:120px;">${katLabel}</th>`;
                 items.forEach(m => thRow2 += `<th class="rekap-th-vertical">${m.latin}</th>`);
             }
         });
@@ -2210,7 +2218,24 @@ function hitungDanRenderRekap(jenis) {
         let filled = vals.filter(x => x!==null);
         let total  = filled.reduce((a,b) => a+b, 0);
         let rata   = filled.length>0 ? Math.round(total/filled.length) : 0;
-        let pred   = rata>=90?'ممتاز':rata>=80?'جيد جدا':rata>=70?'جيد':rata>=60?'مقبول':'راسب';
+        // === LOGIKA PREDIKAT ===
+        // Predikat راسب jika salah satu kondisi terpenuhi:
+        //   1. Nilai Al-Qur'an (ak_01) < 65
+        //   2. Jumlah nilai merah (< 65) SELAIN Al-Qur'an lebih dari 3 mapel
+        //   3. Rata-rata < 65
+        let alquranVal = v['ak_01'];
+        let alquranMerah = (alquranVal !== undefined && alquranVal !== '' && parseFloat(alquranVal) < 65);
+        let jumlahMerahSelainAlquran = orderedMapels.filter(m => {
+            if (m.id === 'ak_01') return false;
+            let nv = v[m.id];
+            return nv !== undefined && nv !== '' && parseFloat(nv) < 65;
+        }).length;
+        let pred;
+        if (alquranMerah || jumlahMerahSelainAlquran >= 3 || rata < 65) {
+            pred = 'راسب';
+        } else {
+            pred = rata>=90?'ممتاز':rata>=80?'جيد جدا':rata>=70?'جيد':rata>=60?'مقبول':'راسب';
+        }
         return { ...s, vals, total: Math.round(total), rata, pred, alfa: a.alfa||0, naik: a.naik!==false, orderedMapels };
     });
 
@@ -2619,6 +2644,7 @@ function onSemesterChange() {
     let hidden = document.getElementById('c_is_genap');
     if (hidden) hidden.value = isGenap ? '1' : '0';
     toggleGenapOptions();
+    autoSimpanIdentitas();
     previewRapor();
 }
 
@@ -2626,7 +2652,20 @@ function toggleGenapOptions() {
     let isGenap = false;
     let hidden = document.getElementById('c_is_genap');
     if (hidden) isGenap = hidden.value === '1';
-    document.getElementById('genap_options').style.display = isGenap ? 'grid' : 'none';
+    // Show/hide kelas naik-tinggal section in tab-catatan
+    let catatanGenap = document.getElementById('catatan_genap_kelas');
+    if (catatanGenap) catatanGenap.style.display = isGenap ? 'grid' : 'none';
+}
+
+// Simpan nilai kelas naik/tinggal ke db.identitas saat diubah dari tab-catatan
+function simpanKelasNaikTinggal() {
+    let elNaik = document.getElementById('c_kelas_naik');
+    let elTinggal = document.getElementById('c_kelas_tinggal');
+    if (!db.identitas) db.identitas = {};
+    if (elNaik) db.identitas.kelas_naik = elNaik.value;
+    if (elTinggal) db.identitas.kelas_tinggal = elTinggal.value;
+    saveData();
+    renderCatatanTab();
 }
 
 // ============================================================
@@ -2749,9 +2788,9 @@ function generateHTMLRaporSatuSiswa(nisn, jenis, isGenap, kelasNaik, kelasTingga
                     barisTabel += '<tr>';
                     if (idx===0) {
                         barisTabel += `<td rowspan="${items.length}" class="arab" style="text-align:center; vertical-align:middle; font-size:15px;">${toArabicNum(groupNo)}</td>
-                        <td rowspan="${items.length}" style="text-align:center; vertical-align:middle; padding:3px;">
-                            <div class="arab" style="font-size:15px; font-weight:bold;">${kat.arab}</div>
-                            <div class="latin" style="font-size:11px; margin-top:2px;">${kat.latin}</div>
+                        <td rowspan="${items.length}" style="text-align:center; vertical-align:middle; padding:3px; max-width:80px;">
+                            <div class="arab" style="font-size:15px; font-weight:bold; white-space:normal; word-break:break-word;">${kat.arab}</div>
+                            <div class="latin" style="font-size:11px; margin-top:2px; white-space:normal; word-break:break-word;">${kat.latin}</div>
                         </td>`; groupNo++;
                     }
                     barisTabel += `<td class="arab" style="text-align:right; padding:2px 5px; font-size:15px;">${m.arab}</td>
