@@ -1,6 +1,4 @@
-// ⬇️ Ganti versi ini setiap kali ada update index.html
-const CACHE_NAME = 'rapor-pwa-v4';
-
+const CACHE_NAME = 'rapor-pwa-v2';
 const urlsToCache = [
   './',
   './index.html',
@@ -8,38 +6,27 @@ const urlsToCache = [
   'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
 ];
 
-// Install: simpan ke cache
+// Install Service Worker dan simpan cache
 self.addEventListener('install', event => {
-  // skipWaiting = langsung aktif tanpa menunggu tab ditutup
+  // Langsung aktifkan tanpa menunggu tab lama ditutup
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME)
+      .then(cache => {
+        return cache.addAll(urlsToCache);
+      })
   );
 });
 
-// Activate: hapus cache lama, ambil alih semua klien
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(cacheNames =>
-      Promise.all(
-        cacheNames
-          .filter(name => name !== CACHE_NAME)
-          .map(name => caches.delete(name))
-      )
-    ).then(() => self.clients.claim()) // langsung kontrol semua tab
-  );
-});
-
-// Fetch: network-first untuk index.html, cache-first untuk aset lain
+// Gunakan cache saat offline, tapi selalu coba ambil versi baru dari jaringan dulu
 self.addEventListener('fetch', event => {
-  const url = new URL(event.request.url);
-
-  // index.html selalu ambil dari network dulu (biar selalu fresh)
-  if (url.pathname.endsWith('index.html') || url.pathname.endsWith('/')) {
+  // Untuk index.html: network-first agar perubahan langsung terasa
+  if (event.request.url.includes('index.html') || event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
         .then(response => {
-          const clone = response.clone();
+          // Simpan versi terbaru ke cache
+          let clone = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
           return response;
         })
@@ -47,9 +34,32 @@ self.addEventListener('fetch', event => {
     );
     return;
   }
-
-  // Aset lain: cache-first
+  // Untuk aset lain: cache-first
   event.respondWith(
-    caches.match(event.request).then(response => response || fetch(event.request))
+    caches.match(event.request)
+      .then(response => {
+        return response || fetch(event.request);
+      })
+  );
+});
+
+// Update cache jika ada versi baru
+self.addEventListener('activate', event => {
+  const cacheWhitelist = [CACHE_NAME];
+  event.waitUntil(
+    Promise.all([
+      // Hapus cache lama
+      caches.keys().then(cacheNames => {
+        return Promise.all(
+          cacheNames.map(cacheName => {
+            if (cacheWhitelist.indexOf(cacheName) === -1) {
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      }),
+      // Langsung ambil alih semua klien yang terbuka
+      self.clients.claim()
+    ])
   );
 });

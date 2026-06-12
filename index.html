@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aplikasi Rapor Ma'had 5.0</title>
+    <title>Aplikasi Rapor 5.0</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2d6a4f">
@@ -288,12 +288,12 @@
         table.data-table tr:last-child td { border-bottom: 1px solid var(--clr-border-soft); }
 
         /* Tabel rekap nilai/absensi (frozen): tabel tetap memenuhi lebar layar,
-           kolom NISN & Nama dibuat cukup lebar agar tidak terpotong */
+           kolom NISN dibuat 108px agar cukup untuk 12 angka, Nama cukup lebar */
         .table-responsive-frozen .data-table thead tr:first-child th:nth-child(1),
         .table-responsive-frozen .data-table tbody td:nth-child(1) {
-            width: 62px;
-            min-width: 62px;
-            max-width: 62px;
+            width: 108px;
+            min-width: 108px;
+            max-width: 108px;
         }
         .table-responsive-frozen .data-table thead tr:first-child th:nth-child(2),
         .table-responsive-frozen .data-table tbody td:nth-child(2) {
@@ -406,7 +406,7 @@
         }
         .table-responsive-frozen .data-table th:nth-child(1) { left: 0; }
         .table-responsive-frozen .data-table th:nth-child(2) {
-            left: 62px;
+            left: 108px;
             /* shadow kanan untuk pemisah visual */
             box-shadow: 2px 0 4px rgba(0,0,0,0.08);
         }
@@ -421,7 +421,7 @@
         .table-responsive-frozen .data-table tbody tr:nth-child(odd) td:nth-child(2),
         .table-responsive-frozen .data-table tbody tr:nth-child(even) td:nth-child(2) {
             position: sticky;
-            left: 62px;
+            left: 108px;
             z-index: 10;
             box-shadow: 2px 0 4px rgba(0,0,0,0.06);
         }
@@ -2188,12 +2188,12 @@ function hitungDanRenderRekap(jenis) {
     }
     let thHTML = '';
     if (jenis==='akademik') {
-        thHTML = `<tr><th style="width:62px;max-width:62px;">NISN</th><th style="min-width:210px;max-width:210px;">Nama</th>`;
+        thHTML = `<tr><th style="width:108px;max-width:108px;">NISN</th><th style="min-width:210px;max-width:210px;">Nama</th>`;
         db.mapel.akademik.forEach(m => thHTML += `<th class="rekap-th-vertical">${m.latin}</th>`);
         thHTML += `<th style="min-width:40px; max-width:40px;">Total</th><th style="min-width:36px; max-width:36px;">Rata</th><th style="min-width:46px; max-width:46px;">Predikat</th><th style="min-width:28px; max-width:28px;">Rank</th></tr>`;
     } else {
         // Build two-row header: row 1 = kategori (Arab + Latin), row 2 = sub-mapel
-        let thRow1 = `<tr><th rowspan="2" style="width:62px;max-width:62px;">NISN</th><th rowspan="2" style="min-width:210px;max-width:210px;">Nama</th>`;
+        let thRow1 = `<tr><th rowspan="2" style="width:108px;max-width:108px;">NISN</th><th rowspan="2" style="min-width:210px;max-width:210px;">Nama</th>`;
         let thRow2 = `<tr>`;
         db.kategori_praktik.forEach(kat => {
             let items = db.mapel.praktik.filter(m => m.kategori===kat.id);
@@ -2264,7 +2264,7 @@ function hitungDanRenderRekap(jenis) {
     let trHTML = '';
     mappedData.forEach((d, rowIdx) => {
         trHTML += `<tr>`;
-        trHTML += `<td style="min-width:62px; max-width:62px;">${d.nisn}</td><td style="text-align:left; white-space:normal; word-break:break-word; min-width:210px; max-width:210px;">${d.nama}</td>`;
+        trHTML += `<td style="min-width:108px; max-width:108px;">${d.nisn}</td><td style="text-align:left; white-space:normal; word-break:break-word; min-width:210px; max-width:210px;">${d.nama}</td>`;
         d.orderedMapels.forEach((m, i) => {
             let rawV = db.nilai[jenis][d.nisn] ? db.nilai[jenis][d.nisn][m.id] : '';
             let curV = (rawV!==undefined && rawV!==null && rawV!=='') ? rawV : '';
@@ -3078,6 +3078,88 @@ function initApp() {
         if (e.key==='F12') { e.preventDefault(); return false; }
         if (e.ctrlKey && e.shiftKey && (e.key==='I'||e.key==='J')) { e.preventDefault(); return false; }
         if (e.ctrlKey && e.key==='U') { e.preventDefault(); return false; }
+
+        // Arrow key navigation for input-tabel cells
+        const inp = e.target;
+        if (!inp || !inp.classList.contains('input-tabel')) return;
+        const key = e.key;
+        if (!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(key)) return;
+
+        const td = inp.closest('td');
+        const tr = inp.closest('tr');
+        const tbody = inp.closest('tbody');
+        if (!td || !tr || !tbody) return;
+
+        const allRows = Array.from(tbody.rows);
+        const rowIdx = allRows.indexOf(tr);
+        const cells = Array.from(tr.cells);
+        const colIdx = cells.indexOf(td);
+
+        let targetInput = null;
+
+        if (key === 'ArrowRight' || key === 'Enter') {
+            // Move right within same row
+            for (let c = colIdx + 1; c < cells.length; c++) {
+                let next = cells[c].querySelector('input.input-tabel');
+                if (next) { targetInput = next; break; }
+            }
+            // Wrap to next row first input-tabel
+            if (!targetInput && rowIdx + 1 < allRows.length) {
+                let nextRow = allRows[rowIdx + 1];
+                for (let cell of nextRow.cells) {
+                    let next = cell.querySelector('input.input-tabel');
+                    if (next) { targetInput = next; break; }
+                }
+            }
+        } else if (key === 'ArrowLeft') {
+            for (let c = colIdx - 1; c >= 0; c--) {
+                let prev = cells[c].querySelector('input.input-tabel');
+                if (prev) { targetInput = prev; break; }
+            }
+            if (!targetInput && rowIdx - 1 >= 0) {
+                let prevRow = allRows[rowIdx - 1];
+                let prevCells = Array.from(prevRow.cells);
+                for (let c = prevCells.length - 1; c >= 0; c--) {
+                    let prev = prevCells[c].querySelector('input.input-tabel');
+                    if (prev) { targetInput = prev; break; }
+                }
+            }
+        } else if (key === 'ArrowDown') {
+            for (let r = rowIdx + 1; r < allRows.length; r++) {
+                let nextRow = allRows[r];
+                let nextCells = Array.from(nextRow.cells);
+                // Try same column index first, else nearest
+                let nextTd = nextCells[colIdx];
+                let next = nextTd ? nextTd.querySelector('input.input-tabel') : null;
+                if (!next) {
+                    for (let cell of nextCells) {
+                        next = cell.querySelector('input.input-tabel');
+                        if (next) break;
+                    }
+                }
+                if (next) { targetInput = next; break; }
+            }
+        } else if (key === 'ArrowUp') {
+            for (let r = rowIdx - 1; r >= 0; r--) {
+                let prevRow = allRows[r];
+                let prevCells = Array.from(prevRow.cells);
+                let prevTd = prevCells[colIdx];
+                let prev = prevTd ? prevTd.querySelector('input.input-tabel') : null;
+                if (!prev) {
+                    for (let c = prevCells.length - 1; c >= 0; c--) {
+                        prev = prevCells[c].querySelector('input.input-tabel');
+                        if (prev) break;
+                    }
+                }
+                if (prev) { targetInput = prev; break; }
+            }
+        }
+
+        if (targetInput) {
+            e.preventDefault();
+            targetInput.focus();
+            targetInput.select();
+        }
     });
 
     // Copy-paste dari Excel ke tabel nilai
