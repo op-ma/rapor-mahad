@@ -3097,5 +3097,31 @@ function initApp() {
         }
     });
     </script>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      // Cek apakah ada SW baru yang menunggu
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            // Ada update tersedia — reload otomatis
+            console.log('Update tersedia, memuat ulang...');
+            window.location.reload();
+          }
+        });
+      });
+    });
+
+    // Jika SW mengambil alih (clients.claim), reload halaman
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true;
+        window.location.reload();
+      }
+    });
+  }
+</script>
 </body>
 </html>
