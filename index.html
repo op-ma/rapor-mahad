@@ -291,13 +291,15 @@
            kolom NISN & Nama dibuat cukup lebar agar tidak terpotong */
         .table-responsive-frozen .data-table thead tr:first-child th:nth-child(1),
         .table-responsive-frozen .data-table tbody td:nth-child(1) {
-            width: 75px;
-            max-width: 75px;
+            width: 62px;
+            min-width: 62px;
+            max-width: 62px;
         }
         .table-responsive-frozen .data-table thead tr:first-child th:nth-child(2),
         .table-responsive-frozen .data-table tbody td:nth-child(2) {
-            width: 170px;
-            max-width: 170px;
+            width: 210px;
+            min-width: 210px;
+            max-width: 210px;
         }
         
         /* Rekap nilai: vertical header dengan wraptext untuk nama panjang (diperkecil agar layar lebih luas).
@@ -399,29 +401,37 @@
         .table-responsive-frozen .data-table th:nth-child(1),
         .table-responsive-frozen .data-table th:nth-child(2) {
             position: sticky;
-            left: 0;
             z-index: 31;
             background: var(--clr-surface-2);
+        }
+        .table-responsive-frozen .data-table th:nth-child(1) { left: 0; }
+        .table-responsive-frozen .data-table th:nth-child(2) {
+            left: 62px;
             /* shadow kanan untuk pemisah visual */
             box-shadow: 2px 0 4px rgba(0,0,0,0.08);
         }
 
         /* Freeze column 1 & 2 pada body — background solid, tidak transparan */
         .table-responsive-frozen .data-table tbody tr:nth-child(odd) td:nth-child(1),
-        .table-responsive-frozen .data-table tbody tr:nth-child(odd) td:nth-child(2) {
+        .table-responsive-frozen .data-table tbody tr:nth-child(even) td:nth-child(1) {
             position: sticky;
             left: 0;
             z-index: 10;
-            background: #ffffff;
+        }
+        .table-responsive-frozen .data-table tbody tr:nth-child(odd) td:nth-child(2),
+        .table-responsive-frozen .data-table tbody tr:nth-child(even) td:nth-child(2) {
+            position: sticky;
+            left: 62px;
+            z-index: 10;
             box-shadow: 2px 0 4px rgba(0,0,0,0.06);
+        }
+        .table-responsive-frozen .data-table tbody tr:nth-child(odd) td:nth-child(1),
+        .table-responsive-frozen .data-table tbody tr:nth-child(odd) td:nth-child(2) {
+            background: #ffffff;
         }
         .table-responsive-frozen .data-table tbody tr:nth-child(even) td:nth-child(1),
         .table-responsive-frozen .data-table tbody tr:nth-child(even) td:nth-child(2) {
-            position: sticky;
-            left: 0;
-            z-index: 10;
             background: #f9fafb;
-            box-shadow: 2px 0 4px rgba(0,0,0,0.06);
         }
         /* Hover state tetap solid */
         .table-responsive-frozen .data-table tbody tr:hover td:nth-child(1),
@@ -1304,15 +1314,19 @@ function hapusSemuaData() {
     if(!confirm('⚠️ Seluruh data akan dihapus permanen. Lanjutkan?')) return;
     let konfirmasi = prompt('Ketik HAPUS untuk mengkonfirmasi:');
     if(konfirmasi !== 'HAPUS') { alert('Penghapusan dibatalkan.'); return; }
-    db = { identitas:{}, siswa:[], kategori_praktik:[], mapel:{akademik:[],praktik:[]}, nilai:{akademik:{},praktik:{}}, absensi:{}, kelasAktif:{jenjang:'',kelas:'',kelasArab:'',jenjangArab:''} };
-    localStorage.removeItem('raporDB_v17');
+    // Pertahankan mapel akademik yang sudah ada (atau pakai master jika kosong)
+    let mapelAkademikTersimpan = (db.mapel && db.mapel.akademik && db.mapel.akademik.length > 0)
+        ? db.mapel.akademik
+        : MASTER_MAPEL_AKADEMIK.map(m => ({...m}));
+    db = { identitas:{}, siswa:[], kategori_praktik:[], mapel:{akademik: mapelAkademikTersimpan, praktik:[]}, nilai:{akademik:{},praktik:{}}, absensi:{}, kelasAktif:{jenjang:'',kelas:'',kelasArab:'',jenjangArab:''} };
+    saveData();
     renderKategoriPraktik(); loadIdentitasForm(); renderTabelSiswa(); renderMapel();
     hitungDanRenderRekap('akademik'); hitungDanRenderRekap('praktik'); updateBackupInfo(); updateDashboard();
     renderAbsensiTab(); renderSikapTab(); renderCatatanTab();
     document.getElementById('sel_jenjang').value = '';
     document.getElementById('sel_kelas').innerHTML = '<option value="">-- Pilih Kelas --</option>';
     document.getElementById('info-kelas-terpilih').style.display = 'none';
-    showToast('🗑️ Semua data telah dihapus.', 3500);
+    showToast('🗑️ Data dihapus. Nama mapel akademik tetap dipertahankan.', 3500);
 }
 
 // ============================================================
@@ -2174,12 +2188,12 @@ function hitungDanRenderRekap(jenis) {
     }
     let thHTML = '';
     if (jenis==='akademik') {
-        thHTML = `<tr><th>NISN</th><th>Nama</th>`;
+        thHTML = `<tr><th style="width:62px;max-width:62px;">NISN</th><th style="min-width:210px;max-width:210px;">Nama</th>`;
         db.mapel.akademik.forEach(m => thHTML += `<th class="rekap-th-vertical">${m.latin}</th>`);
         thHTML += `<th style="min-width:40px; max-width:40px;">Total</th><th style="min-width:36px; max-width:36px;">Rata</th><th style="min-width:46px; max-width:46px;">Predikat</th><th style="min-width:28px; max-width:28px;">Rank</th></tr>`;
     } else {
         // Build two-row header: row 1 = kategori (Arab + Latin), row 2 = sub-mapel
-        let thRow1 = `<tr><th rowspan="2">NISN</th><th rowspan="2">Nama</th>`;
+        let thRow1 = `<tr><th rowspan="2" style="width:62px;max-width:62px;">NISN</th><th rowspan="2" style="min-width:210px;max-width:210px;">Nama</th>`;
         let thRow2 = `<tr>`;
         db.kategori_praktik.forEach(kat => {
             let items = db.mapel.praktik.filter(m => m.kategori===kat.id);
@@ -2250,7 +2264,7 @@ function hitungDanRenderRekap(jenis) {
     let trHTML = '';
     mappedData.forEach((d, rowIdx) => {
         trHTML += `<tr>`;
-        trHTML += `<td style="min-width:75px;">${d.nisn}</td><td style="text-align:left; white-space:nowrap; min-width:140px;">${d.nama}</td>`;
+        trHTML += `<td style="min-width:62px; max-width:62px;">${d.nisn}</td><td style="text-align:left; white-space:normal; word-break:break-word; min-width:210px; max-width:210px;">${d.nama}</td>`;
         d.orderedMapels.forEach((m, i) => {
             let rawV = db.nilai[jenis][d.nisn] ? db.nilai[jenis][d.nisn][m.id] : '';
             let curV = (rawV!==undefined && rawV!==null && rawV!=='') ? rawV : '';
@@ -2295,7 +2309,7 @@ function renderAbsensiTab() {
         let sikap = abs.sikap || 'B';
         trHTML += `<tr>
             <td style="min-width:75px;">${s.nisn}</td>
-            <td style="text-align:left; white-space:nowrap; min-width:140px;">${s.nama}</td>
+            <td style="text-align:left; white-space:normal; word-break:break-word; min-width:210px; max-width:210px;">${s.nama}</td>
             <td style="padding:1px; min-width:30px; text-align:center;"><input type="text" inputmode="numeric" pattern="[0-9\\-]*" maxlength="2" class="input-tabel" value="${abs.sakit!==undefined && abs.sakit!==null && abs.sakit!=='' ? abs.sakit : 0}" style="width:30px;"
                 oninput="this.value=this.value.replace(/[^0-9\\-]/g,'');"
                 onchange="updateAbsensiLangsung('${s.nisn}','sakit',this); renderAbsensiTab()"></td>
@@ -3097,31 +3111,30 @@ function initApp() {
         }
     });
     </script>
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').then(reg => {
-      // Cek apakah ada SW baru yang menunggu
-      reg.addEventListener('updatefound', () => {
-        const newWorker = reg.installing;
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            // Ada update tersedia — reload otomatis
-            console.log('Update tersedia, memuat ulang...');
-            window.location.reload();
-          }
-        });
-      });
-    });
 
-    // Jika SW mengambil alih (clients.claim), reload halaman
-    let refreshing = false;
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (!refreshing) {
-        refreshing = true;
-        window.location.reload();
-      }
-    });
-  }
-</script>
+    <script>
+    // ============================================================
+    // SERVICE WORKER — Auto-update saat versi baru tersedia
+    // ============================================================
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').then(reg => {
+            reg.addEventListener('updatefound', () => {
+                const newWorker = reg.installing;
+                newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                        // Ada versi baru — reload otomatis
+                        window.location.reload();
+                    }
+                });
+            });
+        }).catch(err => console.warn('SW registration gagal:', err));
+
+        // Jika SW baru langsung mengambil alih (clients.claim), reload
+        let swRefreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!swRefreshing) { swRefreshing = true; window.location.reload(); }
+        });
+    }
+    </script>
 </body>
 </html>
