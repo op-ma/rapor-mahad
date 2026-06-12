@@ -1,5 +1,5 @@
 // ⬇️ Ganti versi ini setiap kali ada update index.html
-const CACHE_NAME = 'rapor-pwa-v2';
+const CACHE_NAME = 'rapor-pwa-v3';
 
 const urlsToCache = [
   './',
