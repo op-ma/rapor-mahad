@@ -286,65 +286,93 @@
         table.data-table th { background: var(--clr-surface-2); color: var(--clr-text-muted); font-weight: 600; font-size: 11px; text-transform: uppercase; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid var(--clr-border); font-family: var(--font-body); }
         table.data-table tr:hover td { background: #f7faf6; }
         table.data-table tr:last-child td { border-bottom: 1px solid var(--clr-border-soft); }
+
+        /* Tabel rekap nilai/absensi (frozen): tabel tetap memenuhi lebar layar,
+           kolom NISN & Nama dibuat cukup lebar agar tidak terpotong */
+        .table-responsive-frozen .data-table thead tr:first-child th:nth-child(1),
+        .table-responsive-frozen .data-table tbody td:nth-child(1) {
+            width: 75px;
+            max-width: 75px;
+        }
+        .table-responsive-frozen .data-table thead tr:first-child th:nth-child(2),
+        .table-responsive-frozen .data-table tbody td:nth-child(2) {
+            width: 170px;
+            max-width: 170px;
+        }
         
-        /* Rekap nilai: vertical header dengan wraptext untuk nama panjang */
+        /* Rekap nilai: vertical header dengan wraptext untuk nama panjang (diperkecil agar layar lebih luas).
+           min-width dipatok 30px, tapi TANPA max-width agar kolom mapel ini yang
+           menyerap sisa ruang kosong ketika jumlah mapel sedikit (bukan Total/Rata/Predikat/Rank). */
         .rekap-th-vertical {
             writing-mode: vertical-rl;
             text-orientation: mixed;
             transform: rotate(180deg);
-            height: 130px;
-            max-height: 150px;
+            height: 90px;
+            max-height: 105px;
             white-space: normal;
             word-break: break-word;
-            padding: 6px 4px !important;
-            min-width: 28px;
-            max-width: 40px;
+            padding: 4px 1px !important;
+            width: 30px;
+            min-width: 30px;
+            font-size: 9px;
             vertical-align: middle;   /* tengah vertikal */
             text-align: center;       /* tengah horizontal dalam writing-mode */
         }
 
-        .input-tabel { 
-            width: 65px !important;
-            max-width: 70px;
-            min-width: 55px;
+        /* Catatan: gunakan selector "input.input-tabel" agar specificity-nya
+           mengalahkan rule global "input[type=text]" (yang punya padding 9px
+           & font-size 13.5px) sehingga ukuran kecil ini benar-benar diterapkan. */
+        input.input-tabel { 
+            width: 30px !important;
+            max-width: 30px !important;
+            min-width: 30px !important;
             margin: 0 auto;
-            border: 1.5px solid #e0e0e0; 
-            background: #fafafa; 
+            border: none; 
+            background: transparent; 
             text-align: center; 
-            font-size: 13px; 
+            font-size: 9px !important; 
             font-weight: 600; 
-            padding: 6px 3px; 
+            line-height: 1.2;
+            padding: 2px 0 !important; 
             font-family: var(--font-body); 
-            border-radius: 4px; 
+            border-radius: 3px; 
             transition: all 0.15s;
             box-sizing: border-box;
             display: inline-block;
         }
         
         /* Support both text and number inputs */
-        .input-tabel[type="text"],
-        .input-tabel[type="number"] {
+        input.input-tabel[type="text"],
+        input.input-tabel[type="number"] {
             font-variant-numeric: tabular-nums;
         }
         
-        .input-tabel:hover { 
-            border-color: #999;
-            background: #fff;
+        input.input-tabel:hover { 
+            background: #f3f4f6;
         }
-        .input-tabel:focus { 
+        input.input-tabel:focus { 
             background: #fffde7; 
             outline: 2px solid var(--clr-accent); 
-            border-color: var(--clr-accent);
-            width: 75px !important;
-            box-shadow: 0 0 8px rgba(183, 147, 90, 0.3);
+            outline-offset: -1px;
+            box-shadow: none;
         }
-        .input-tabel::-webkit-outer-spin-button,
-        .input-tabel::-webkit-inner-spin-button { 
+        input.input-tabel::-webkit-outer-spin-button,
+        input.input-tabel::-webkit-inner-spin-button { 
             display: none;
             margin: 0;
         }
-        .input-tabel[type=number] { 
+        input.input-tabel[type=number] { 
             -moz-appearance: textfield;
+        }
+
+        /* Tabel nilai (frozen) dibuat lebih ringkas: font lebih kecil, padding lebih tipis */
+        .table-responsive-frozen .data-table th,
+        .table-responsive-frozen .data-table td {
+            padding: 1px 2px;
+            font-size: 10px;
+        }
+        .table-responsive-frozen .data-table th {
+            font-size: 9px;
         }
 
         /* --- FROZEN COLUMNS FOR NILAI TABLE (Double Freeze: Header & Name) --- */
@@ -554,7 +582,7 @@
     <div class="app-header no-print">
         <div class="app-header-title">
             Aplikasi Rapor 5.0
-            <span>PESANTREN AL- MA'TUQ</span>
+            <span>PESANTREN AL MA'TUQ</span>
         </div>
         <div style="font-size:12px; opacity:0.55; font-weight:400;">Data tersimpan di perangkat ini</div>
     </div>
@@ -784,49 +812,65 @@
     <div id="tab-mapel" class="tab-content latin">
         <h2>Kelola Mata Pelajaran</h2>
         <div class="info-tip" style="margin-bottom:16px;">ℹ️ Mapel akademik sudah ditanam otomatis. Anda dapat menambah, mengedit, atau menghapus sesuai kebutuhan.</div>
-        <div class="grid-2">
+        <div class="tab-switcher no-print" style="margin-bottom:16px;">
+            <button class="active-btn" id="btn-sub-mapel-akademik" onclick="switchMapelSub('akademik')">📘 Mapel Akademik</button>
+            <button id="btn-sub-mapel-praktik" onclick="switchMapelSub('praktik')">🛠️ Mapel Praktik Dinamis</button>
+        </div>
+
+        <div id="sub-mapel-akademik" style="display:block;">
             <div class="section-panel panel-primary">
                 <h3>Mapel Akademik</h3>
-                <div class="sub-card">
-                    <p class="text-small text-muted">Import Mapel (Header Excel: <b>Latin, Arab</b>)</p>
-                    <button class="btn-excel" style="font-size:12px; padding:7px 10px; margin-bottom:8px;" onclick="downloadTemplateMapel()">📥 Download Template Mapel</button>
-                    <input type="file" id="excel_mapel_akademik" accept=".xlsx, .xls" />
-                    <button class="btn-action" style="padding:5px 10px; font-size:12px; margin-top:4px;" onclick="importExcelMapel('akademik')">📥 Import</button>
+                <div class="grid-2" style="align-items:start; gap:16px;">
+                    <div>
+                        <div class="sub-card">
+                            <p class="text-small text-muted">Import Mapel (Header Excel: <b>Latin, Arab</b>)</p>
+                            <button class="btn-excel" style="font-size:12px; padding:7px 10px; margin-bottom:8px;" onclick="downloadTemplateMapel()">📥 Download Template Mapel</button>
+                            <input type="file" id="excel_mapel_akademik" accept=".xlsx, .xls" />
+                            <button class="btn-action" style="padding:5px 10px; font-size:12px; margin-top:4px;" onclick="importExcelMapel('akademik')">📥 Import</button>
+                        </div>
+                        <div class="form-group"><input type="text" id="m_ak_latin" placeholder="Nama Mapel (Latin)"></div>
+                        <div class="form-group"><input type="text" id="m_ak_arab" placeholder="Nama Mapel (Arab)" dir="rtl" class="arab"></div>
+                        <button class="btn-action" onclick="tambahMapel('akademik')">➕ Tambah Manual</button>
+                    </div>
+                    <div class="table-responsive" style="max-height:520px;"><table class="data-table"><thead><tr><th>No</th><th>Latin</th><th>Arab</th><th>Aksi</th></tr></thead><tbody id="tbl_mapel_akademik"></tbody></table></div>
                 </div>
-                <div class="form-group"><input type="text" id="m_ak_latin" placeholder="Nama Mapel (Latin)"></div>
-                <div class="form-group"><input type="text" id="m_ak_arab" placeholder="Nama Mapel (Arab)" dir="rtl" class="arab"></div>
-                <button class="btn-action" onclick="tambahMapel('akademik')">➕ Tambah Manual</button>
-                <div class="table-responsive"><table class="data-table"><thead><tr><th>No</th><th>Latin</th><th>Arab</th><th>Aksi</th></tr></thead><tbody id="tbl_mapel_akademik"></tbody></table></div>
             </div>
+        </div>
+
+        <div id="sub-mapel-praktik" style="display:none;">
             <div class="section-panel panel-accent">
                 <h3>Mapel Praktik Dinamis</h3>
-                <div class="sub-card" style="background:var(--clr-accent-light); border-color:#e8d5b0;">
-                    <h4>1. Buat Kategori Induk Mapel Praktik</h4>
-                    <div class="grid-2" style="gap:10px;">
-                        <input type="text" id="kat_pr_latin" placeholder="Kategori (Latin)" style="width:100%; padding:7px 10px; font-size:13px; border:1.5px solid var(--clr-border); border-radius:var(--radius-sm);">
-                        <input type="text" id="kat_pr_arab" placeholder="Kategori (Arab)" class="arab" dir="rtl" style="width:100%; padding:7px 10px; border:1.5px solid var(--clr-border); border-radius:var(--radius-sm);">
+                <div class="grid-2" style="align-items:start; gap:16px;">
+                    <div>
+                        <div class="sub-card" style="background:var(--clr-accent-light); border-color:#e8d5b0;">
+                            <h4>1. Buat Kategori Induk Mapel Praktik</h4>
+                            <div class="grid-2" style="gap:10px;">
+                                <input type="text" id="kat_pr_latin" placeholder="Kategori (Latin)" style="width:100%; padding:7px 10px; font-size:13px; border:1.5px solid var(--clr-border); border-radius:var(--radius-sm);">
+                                <input type="text" id="kat_pr_arab" placeholder="Kategori (Arab)" class="arab" dir="rtl" style="width:100%; padding:7px 10px; border:1.5px solid var(--clr-border); border-radius:var(--radius-sm);">
+                            </div>
+                            <button class="btn-save" style="margin-top:10px; font-size:12px; padding:7px 13px;" onclick="tambahKategoriPraktik()">➕ Tambah Kategori</button>
+                            <div id="list_kategori_praktik" style="margin-top:10px; font-size:13px; max-height:100px; overflow-y:auto; background:white; padding:6px; border:1px solid var(--clr-border); border-radius:var(--radius-sm);"></div>
+                        </div>
+                        <div class="sub-card">
+                            <p class="text-small text-muted">Import Sub-Mapel (Header Excel: <b>Latin, Arab</b>)</p>
+                            <button class="btn-excel" style="font-size:12px; padding:7px 10px; margin-bottom:8px;" onclick="downloadTemplateMapel()">📥 Download Template Sub-Mapel</button>
+                            <input type="file" id="excel_mapel_praktik" accept=".xlsx, .xls" />
+                            <button class="btn-action" style="padding:5px 10px; font-size:12px; margin-top:4px;" onclick="importExcelMapel('praktik')">📥 Import</button>
+                        </div>
+                        <h4>2. Tambah Sub-Mapel Praktik</h4>
+                        <div class="form-group" style="margin-bottom:10px;">
+                            <select id="m_pr_kategori" style="background-color:var(--clr-accent-light); border-color:#e8d5b0;"></select>
+                        </div>
+                        <div class="form-group"><input type="text" id="m_pr_latin" placeholder="Nama Sub-Mapel (Latin)"></div>
+                        <div class="form-group"><input type="text" id="m_pr_arab" placeholder="Nama Sub-Mapel (Arab)" dir="rtl" class="arab"></div>
+                        <button class="btn-save" style="font-size:12.5px; padding:8px 14px;" onclick="tambahMapel('praktik')">➕ Tambah Sub-Mapel</button>
                     </div>
-                    <button class="btn-save" style="margin-top:10px; font-size:12px; padding:7px 13px;" onclick="tambahKategoriPraktik()">➕ Tambah Kategori</button>
-                    <div id="list_kategori_praktik" style="margin-top:10px; font-size:13px; max-height:100px; overflow-y:auto; background:white; padding:6px; border:1px solid var(--clr-border); border-radius:var(--radius-sm);"></div>
-                </div>
-                <div class="sub-card">
-                    <p class="text-small text-muted">Import Sub-Mapel (Header Excel: <b>Latin, Arab</b>)</p>
-                    <button class="btn-excel" style="font-size:12px; padding:7px 10px; margin-bottom:8px;" onclick="downloadTemplateMapel()">📥 Download Template Sub-Mapel</button>
-                    <input type="file" id="excel_mapel_praktik" accept=".xlsx, .xls" />
-                    <button class="btn-action" style="padding:5px 10px; font-size:12px; margin-top:4px;" onclick="importExcelMapel('praktik')">📥 Import</button>
-                </div>
-                <h4>2. Tambah Sub-Mapel Praktik</h4>
-                <div class="form-group" style="margin-bottom:10px;">
-                    <select id="m_pr_kategori" style="background-color:var(--clr-accent-light); border-color:#e8d5b0;"></select>
-                </div>
-                <div class="form-group"><input type="text" id="m_pr_latin" placeholder="Nama Sub-Mapel (Latin)"></div>
-                <div class="form-group"><input type="text" id="m_pr_arab" placeholder="Nama Sub-Mapel (Arab)" dir="rtl" class="arab"></div>
-                <button class="btn-save" style="font-size:12.5px; padding:8px 14px;" onclick="tambahMapel('praktik')">➕ Tambah Sub-Mapel</button>
-                <div class="table-responsive">
-                    <table class="data-table">
-                        <thead><tr><th>No</th><th>Kategori</th><th>Latin</th><th>Arab</th><th>Aksi</th></tr></thead>
-                        <tbody id="tbl_mapel_praktik"></tbody>
-                    </table>
+                    <div class="table-responsive" style="max-height:650px;">
+                        <table class="data-table">
+                            <thead><tr><th>No</th><th>Kategori</th><th>Latin</th><th>Arab</th><th>Aksi</th></tr></thead>
+                            <tbody id="tbl_mapel_praktik"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -991,6 +1035,30 @@
     <div id="tab-catatan" class="tab-content latin">
         <h2>📝 Catatan & Kenaikan Kelas</h2>
         <div class="info-tip" style="margin-bottom:16px;" id="info-catatan-kelas">ℹ️ Silakan pilih kelas terlebih dahulu di tab <b>Identitas & Kelas</b>.</div>
+
+        <div class="card" id="card_bulk_naik" style="display:none; margin-bottom:16px;">
+            <h3>🎓 Aksi Kenaikan Kelas (Massal)</h3>
+            <p style="font-size:13px; color:var(--clr-text-muted); margin-bottom:12px;">Atur status kenaikan kelas untuk <b>seluruh siswa sekaligus</b> tanpa harus satu per satu. Anda tetap bisa mengubah status per-siswa secara individual lewat tombol Edit di tabel bawah.</p>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button class="btn-save" style="background:#2d6a4f;" onclick="toggleSemuaNaik(true)">✅ Naikkan Semua Siswa</button>
+                <button class="btn-danger" onclick="toggleSemuaNaik(false)">❌ Tidak Naikkan Semua Siswa</button>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom:16px;">
+            <h3>📊 Template Excel Catatan & Kenaikan Kelas</h3>
+            <p style="font-size:13px; color:var(--clr-text-muted); margin-bottom:12px;">Download template, isi catatan & status kenaikan di Excel untuk seluruh siswa, lalu import kembali ke aplikasi.</p>
+            <div class="grid-2" style="gap:10px;">
+                <div class="upload-box">
+                    <button class="btn-excel" style="width:100%;" onclick="downloadTemplateCatatan()">📥 Download Template Catatan</button>
+                </div>
+                <div class="upload-box" style="border-color:var(--clr-accent); background:var(--clr-accent-light);">
+                    <input type="file" id="excel_catatan" accept=".xlsx, .xls" style="margin-bottom:8px;" />
+                    <button class="btn-save" style="width:100%;" onclick="importExcelCatatan()">⬆️ Import Catatan dari Excel</button>
+                </div>
+            </div>
+        </div>
+
         <div class="card">
             <h3>Catatan & Status Kenaikan Per Siswa</h3>
             <p style="font-size:13px; color:var(--clr-text-muted); margin-bottom:12px;">Isi catatan dan tentukan status kenaikan kelas setiap santri. Status kenaikan akan tampil otomatis di cetak rapor semester genap.</p>
@@ -1004,6 +1072,7 @@
             </div>
         </div>
     </div>
+
 
     <div id="tab-cetak" class="tab-content latin">
         <div class="cetak-controls no-print">
@@ -1089,31 +1158,37 @@ const MASTER_SISWA_RAW = {"الثالث -  أ|||الثانوية":{"kelas":"ال
 const MASTER_MAPEL_AKADEMIK = [
   { id:'ak_01', latin:'Al-Qur\'an', arab:'القرآن' },
   { id:'ak_02', latin:'Tauhid', arab:'التوحيد' },
-  { id:'ak_03', latin:'Hadits', arab:'الحديث' },
-  { id:'ak_04', latin:'Fikih', arab:'الفقه' },
-  { id:'ak_05', latin:'Tafsir', arab:'التفسير' },
-  { id:'ak_06', latin:'Tarikh', arab:'التاريخ' },
-  { id:'ak_07', latin:'Akhlak', arab:'الأخلاق' },
-  { id:'ak_08', latin:'Musthalah Hadits', arab:'مصطلح الحديث' },
-  { id:'ak_09', latin:'Faraidh', arab:'الفرائض' },
-  { id:'ak_10', latin:'Tadrib', arab:'التدريب' },
-  { id:'ak_11', latin:'Nahwu', arab:'النحو' },
-  { id:'ak_12', latin:'Matematika', arab:'الرياضيات' },
-  { id:'ak_13', latin:'Bahasa Indonesia', arab:'اللغة الإندونيسية' },
-  { id:'ak_14', latin:'Bahasa Inggris', arab:'اللغة الإنجليزية' },
-  { id:'ak_15', latin:'Ilmu Pengetahuan Alam', arab:'العلوم الطبيعية' },
-  { id:'ak_16', latin:'Ilmu Pengetahuan Sosial', arab:'العلوم الاجتماعية' },
-  { id:'ak_17', latin:'Pendidikan Pancasila', arab:'تربية البنتشاسيلا' },
-  { id:'ak_18', latin:'Matematika (Wajib)', arab:'علم الرياضيات الإلزامي' },
-  { id:'ak_19', latin:'Matematika (Peminatan)', arab:'علم الرياضيات المتخصصي' },
-  { id:'ak_20', latin:'Biologi', arab:'علم الأحياء' },
-  { id:'ak_21', latin:'Kimia', arab:'علم الكيمياء' },
-  { id:'ak_22', latin:'Fisika', arab:'علم الفيزياء' },
-  { id:'ak_23', latin:'Informatika', arab:'المعلوماتية' },
+  { id:'ak_03', latin:'Akhlak', arab:'الأخلاق' },
+  { id:'ak_04', latin:'Hadits', arab:'الحديث' },
+  { id:'ak_05', latin:'Fikih', arab:'الفقه' },
+  { id:'ak_06', latin:'Siroh Nabi', arab:'السيرة النبوية' },
+  { id:'ak_07', latin:'Tadrib', arab:'التدريب' },
+  { id:'ak_08', latin:'Tajwid', arab:'التجويد' },
+  { id:'ak_09', latin:'Khot', arab:'الخط العربي' },
+  { id:'ak_10', latin:'Matematika', arab:'الرياضية' },
+  { id:'ak_11', latin:'Bahasa Indonesia', arab:'اللغة الإندونيسية' },
+  { id:'ak_12', latin:'Bahasa Inggris', arab:'اللغة الإنجليزية' },
+  { id:'ak_13', latin:'Ilmu Pengetahuan Alam', arab:'العلوم الطبيعية' },
+  { id:'ak_14', latin:'Ilmu Pengetahuan Sosial', arab:'العلوم الاجتماعية' },
+  { id:'ak_15', latin:'TIK', arab:'الحاسب الآلي' },
+  { id:'ak_16', latin:'Nahwu', arab:'النحو' },
+  { id:'ak_17', latin:'Sharf', arab:'الصرف' },
+  { id:'ak_18', latin:'Imla', arab:'الإملاء' },
+  { id:'ak_19', latin:'Tafsir', arab:'التفسير' },
+  { id:'ak_20', latin:'Tarikh', arab:'التاريخ' },
+  { id:'ak_21', latin:'Musthalah Hadits', arab:'مصطلح الحديث' },
+  { id:'ak_22', latin:'Faraidh', arab:'الفرائض' },
+  { id:'ak_23', latin:'Pendidikan Pancasila', arab:'تربية البنتشاسيلا' },
   { id:'ak_24', latin:'Ushul Fikih', arab:'أصول الفقه' },
   { id:'ak_25', latin:'Ulumul Qur\'an', arab:'علوم القرآن' },
   { id:'ak_26', latin:'Balaghah', arab:'البلاغة' },
-  { id:'ak_27', latin:'Sejarah Indonesia', arab:'التاريخ الإندونيسي' }
+  { id:'ak_27', latin:'Informatika', arab:'المعلوماتية' },
+  { id:'ak_28', latin:'Matematika (Wajib)', arab:'علم الرياضيات الإلزامي' },
+  { id:'ak_29', latin:'Matematika (Peminatan)', arab:'علم الرياضيات المتخصصي' },
+  { id:'ak_30', latin:'Biologi', arab:'علم الأحياء' },
+  { id:'ak_31', latin:'Kimia', arab:'علم الكيمياء' },
+  { id:'ak_32', latin:'Fisika', arab:'علم الفيزياء' },
+  { id:'ak_33', latin:'Sejarah Indonesia', arab:'التاريخ الإندونيسي' }
 ];
 
 // ============================================================
@@ -1835,6 +1910,12 @@ function switchRekap(jenis) {
     document.getElementById('btn-tab-akademik').className  = jenis==='akademik' ? 'active-btn' : '';
     document.getElementById('btn-tab-praktik').className   = jenis==='praktik'  ? 'active-btn' : '';
 }
+function switchMapelSub(jenis) {
+    document.getElementById('sub-mapel-akademik').style.display = jenis==='akademik' ? 'block' : 'none';
+    document.getElementById('sub-mapel-praktik').style.display  = jenis==='praktik'  ? 'block' : 'none';
+    document.getElementById('btn-sub-mapel-akademik').className = jenis==='akademik' ? 'active-btn' : '';
+    document.getElementById('btn-sub-mapel-praktik').className  = jenis==='praktik'  ? 'active-btn' : '';
+}
 function filterSiswa(jenis) {
     let input = document.getElementById(jenis==='akademik' ? 'cari_siswa_akademik' : 'cari_siswa_praktik').value.toLowerCase();
     let tbody = document.getElementById(jenis==='akademik' ? 'tb_akademik' : 'tb_praktik');
@@ -1942,7 +2023,8 @@ function toggleSemuaNaik(isChecked) {
         if (!db.absensi[s.nisn]) db.absensi[s.nisn] = {sakit:0,izin:0,alfa:0,sikap:'B',catatan:'',naik:isChecked};
         else db.absensi[s.nisn].naik = isChecked;
     });
-    saveData(); hitungDanRenderRekap('akademik');
+    saveData(); hitungDanRenderRekap('akademik'); renderCatatanTab();
+    showToast(isChecked ? '✅ Semua siswa di-set NAIK KELAS' : '❌ Semua siswa di-set TIDAK NAIK');
 }
 window.editCatatan = function(nisn) {
     let s = db.siswa.find(x => x.nisn === nisn);
@@ -2086,7 +2168,7 @@ function hitungDanRenderRekap(jenis) {
     if (jenis==='akademik') {
         thHTML = `<tr><th>NISN</th><th>Nama</th>`;
         db.mapel.akademik.forEach(m => thHTML += `<th class="rekap-th-vertical">${m.latin}</th>`);
-        thHTML += `<th style="min-width:45px;">Total</th><th style="min-width:40px;">Rata</th><th style="min-width:60px;">Predikat</th><th style="min-width:35px;">Rank</th></tr>`;
+        thHTML += `<th style="min-width:40px; max-width:40px;">Total</th><th style="min-width:36px; max-width:36px;">Rata</th><th style="min-width:46px; max-width:46px;">Predikat</th><th style="min-width:28px; max-width:28px;">Rank</th></tr>`;
     } else {
         // Build two-row header: row 1 = kategori (Arab + Latin), row 2 = sub-mapel
         let thRow1 = `<tr><th rowspan="2">NISN</th><th rowspan="2">Nama</th>`;
@@ -2105,7 +2187,7 @@ function hitungDanRenderRekap(jenis) {
             thRow1 += `<th colspan="${unass.length}" style="background:var(--clr-accent-light);">Lainnya</th>`;
             unass.forEach(m => thRow2 += `<th class="rekap-th-vertical">${m.latin}</th>`);
         }
-        thRow1 += `<th rowspan="2" style="height:150px;">Total</th><th rowspan="2" style="height:150px;">Rata</th></tr>`;
+        thRow1 += `</tr>`;
         thRow2 += `</tr>`;
         thHTML = thRow1 + thRow2;
     }
@@ -2128,7 +2210,7 @@ function hitungDanRenderRekap(jenis) {
         let filled = vals.filter(x => x!==null);
         let total  = filled.reduce((a,b) => a+b, 0);
         let rata   = filled.length>0 ? Math.round(total/filled.length) : 0;
-        let pred   = rata>=90?'ممتاز':rata>=80?'جيد جداً':rata>=70?'جيد':rata>=60?'مقبول':'راسب';
+        let pred   = rata>=90?'ممتاز':rata>=80?'جيد جدا':rata>=70?'جيد':rata>=60?'مقبول':'راسب';
         return { ...s, vals, total: Math.round(total), rata, pred, alfa: a.alfa||0, naik: a.naik!==false, orderedMapels };
     });
 
@@ -2142,23 +2224,22 @@ function hitungDanRenderRekap(jenis) {
 
     let trHTML = '';
     mappedData.forEach((d, rowIdx) => {
-        let cNaik = d.naik ? '' : 'style="background:var(--clr-danger-light);"';
-        trHTML += `<tr ${cNaik}>`;
-        trHTML += `<td style="min-width:70px;">${d.nisn}</td><td style="text-align:left; white-space:nowrap; min-width:150px;">${d.nama}</td>`;
+        trHTML += `<tr>`;
+        trHTML += `<td style="min-width:75px;">${d.nisn}</td><td style="text-align:left; white-space:nowrap; min-width:140px;">${d.nama}</td>`;
         d.orderedMapels.forEach((m, i) => {
             let rawV = db.nilai[jenis][d.nisn] ? db.nilai[jenis][d.nisn][m.id] : '';
             let curV = (rawV!==undefined && rawV!==null && rawV!=='') ? rawV : '';
             let cMerah = (curV!=='' && parseFloat(curV)<65) ? 'color:red;' : '';
-            trHTML += `<td style="padding:2px; min-width:75px; text-align:center;"><input type="text" 
-                inputmode="decimal" pattern="[0-9.]+" maxlength="5" class="input-tabel" value="${curV}" style="${cMerah}; width:65px;" 
+            trHTML += `<td style="padding:1px; min-width:30px; text-align:center;"><input type="text" 
+                inputmode="decimal" pattern="[0-9.]+" maxlength="5" class="input-tabel" value="${curV}" style="${cMerah}; width:30px;" 
                 oninput="this.value=this.value.replace(/[^0-9.]/g,''); this.style.color=(this.value && parseFloat(this.value)<65)?'red':'inherit';"
                 onchange="updateNilaiLangsung('${d.nisn}','${m.id}','${jenis}',this)"></td>`;
         });
         let cPred = d.pred==='راسب' ? 'color:red;font-weight:bold;' : 'color:var(--clr-success);font-weight:bold;';
-        trHTML += `<td class="latin" style="white-space:nowrap; padding:4px;"><b>${d.total}</b></td>
-            <td class="latin" style="white-space:nowrap; padding:4px;"><b>${d.rata}</b></td>`;
         if (jenis==='akademik') {
-            trHTML += `<td class="arab" dir="rtl" style="${cPred} white-space:nowrap; padding:4px;">${d.pred}</td>
+            trHTML += `<td class="latin" style="white-space:nowrap; padding:2px; max-width:40px;"><b>${d.total}</b></td>
+                <td class="latin" style="white-space:nowrap; padding:2px; max-width:36px;"><b>${d.rata}</b></td>
+                <td class="arab" dir="rtl" style="${cPred} white-space:nowrap; padding:4px;">${d.pred}</td>
                 <td class="latin" style="white-space:nowrap; padding:4px;"><b>${db.nilai[jenis][d.nisn].kalkulasi.rankFull}</b></td>`;
         }
         trHTML += `</tr>`;
@@ -2188,15 +2269,15 @@ function renderAbsensiTab() {
         let abs = db.absensi[s.nisn] || {sakit:0, izin:0, alfa:0, sikap:'B', naik:true, catatan:''};
         let sikap = abs.sikap || 'B';
         trHTML += `<tr>
-            <td style="min-width:70px;">${s.nisn}</td>
-            <td style="text-align:left; white-space:nowrap; min-width:130px;">${s.nama}</td>
-            <td style="padding:2px; min-width:75px; text-align:center;"><input type="text" inputmode="numeric" pattern="[0-9\\-]*" maxlength="2" class="input-tabel" value="${abs.sakit!==undefined && abs.sakit!==null && abs.sakit!=='' ? abs.sakit : 0}" style="width:65px;"
+            <td style="min-width:75px;">${s.nisn}</td>
+            <td style="text-align:left; white-space:nowrap; min-width:140px;">${s.nama}</td>
+            <td style="padding:1px; min-width:30px; text-align:center;"><input type="text" inputmode="numeric" pattern="[0-9\\-]*" maxlength="2" class="input-tabel" value="${abs.sakit!==undefined && abs.sakit!==null && abs.sakit!=='' ? abs.sakit : 0}" style="width:30px;"
                 oninput="this.value=this.value.replace(/[^0-9\\-]/g,'');"
                 onchange="updateAbsensiLangsung('${s.nisn}','sakit',this); renderAbsensiTab()"></td>
-            <td style="padding:2px; min-width:75px; text-align:center;"><input type="text" inputmode="numeric" pattern="[0-9\\-]*" maxlength="2" class="input-tabel" value="${abs.izin!==undefined && abs.izin!==null && abs.izin!=='' ? abs.izin : 0}" style="width:65px;"
+            <td style="padding:1px; min-width:30px; text-align:center;"><input type="text" inputmode="numeric" pattern="[0-9\\-]*" maxlength="2" class="input-tabel" value="${abs.izin!==undefined && abs.izin!==null && abs.izin!=='' ? abs.izin : 0}" style="width:30px;"
                 oninput="this.value=this.value.replace(/[^0-9\\-]/g,'');"
                 onchange="updateAbsensiLangsung('${s.nisn}','izin',this); renderAbsensiTab()"></td>
-            <td style="padding:2px; min-width:75px; text-align:center;"><input type="text" inputmode="numeric" pattern="[0-9\\-]*" maxlength="2" class="input-tabel" value="${abs.alfa!==undefined && abs.alfa!==null && abs.alfa!=='' ? abs.alfa : 0}" style="width:65px;"
+            <td style="padding:1px; min-width:30px; text-align:center;"><input type="text" inputmode="numeric" pattern="[0-9\\-]*" maxlength="2" class="input-tabel" value="${abs.alfa!==undefined && abs.alfa!==null && abs.alfa!=='' ? abs.alfa : 0}" style="width:30px;"
                 oninput="this.value=this.value.replace(/[^0-9\\-]/g,'');"
                 onchange="updateAbsensiLangsung('${s.nisn}','alfa',this); renderAbsensiTab()"></td>
             <td style="padding:2px;">
@@ -2334,10 +2415,12 @@ function renderCatatanTab() {
         document.getElementById('info-catatan-kelas').style.display = 'block';
         document.getElementById('info-catatan-kelas').innerHTML = 'ℹ️ Silakan pilih kelas terlebih dahulu di tab <b>Identitas & Kelas</b>.';
         document.getElementById('tb_catatan_tab').innerHTML = '';
+        document.getElementById('card_bulk_naik').style.display = 'none';
         return;
     }
     document.getElementById('info-catatan-kelas').style.display = 'none';
     let isGenap = (db.identitas.semester_latin||'').includes('Genap');
+    document.getElementById('card_bulk_naik').style.display = isGenap ? 'block' : 'none';
     let trHTML = '';
     db.siswa.forEach((s, i) => {
         let abs = db.absensi[s.nisn] || {};
@@ -2400,9 +2483,9 @@ function updateStatusNaikKelas() {
     if (preview) {
         preview.style.display = 'block';
         if (naik) {
-            preview.innerHTML = `Pada rapor: <b>NAIK</b> ke kelas <b>${kNaik}</b> &nbsp;|&nbsp; ~~TINGGAL di kelas ${kTinggal}~~`;
+            preview.innerHTML = `Pada rapor: <b>NAIK</b> ke kelas <b>${kNaik}</b> &nbsp;|&nbsp; <span style="color:#dc3545; text-decoration:line-through;">TINGGAL di kelas ${kTinggal}</span>`;
         } else {
-            preview.innerHTML = `Pada rapor: ~~NAIK ke kelas ${kNaik}~~ &nbsp;|&nbsp; <b style="color:#dc3545;">TINGGAL di kelas <b>${kTinggal}</b>`;
+            preview.innerHTML = `Pada rapor: <span style="text-decoration:line-through;">NAIK ke kelas ${kNaik}</span> &nbsp;|&nbsp; <b style="color:#dc3545;">TINGGAL di kelas ${kTinggal}</b>`;
         }
     }
     // Highlight active label
@@ -2433,6 +2516,62 @@ window.simpanCatatanModal = function() {
     showToast('✅ Catatan & status kenaikan disimpan.');
     renderCatatanTab();
 };
+
+// ============================================================
+// TEMPLATE & IMPORT CATATAN + KENAIKAN KELAS (EXCEL)
+// ============================================================
+function downloadTemplateCatatan() {
+    if (!db.siswa || db.siswa.length === 0) return alert('Belum ada data siswa di kelas ini!');
+    let isGenap = (db.identitas.semester_latin||'').includes('Genap');
+    let header = isGenap
+        ? ['NISN', 'Nama', 'Status Kenaikan (NAIK/TINGGAL)', 'Catatan']
+        : ['NISN', 'Nama', 'Catatan'];
+    let rows = [header];
+    db.siswa.forEach(s => {
+        let a = db.absensi[s.nisn] || {};
+        let row = [s.nisn, s.nama];
+        if (isGenap) row.push(a.naik !== false ? 'NAIK' : 'TINGGAL');
+        row.push(a.catatan || '');
+        rows.push(row);
+    });
+    let ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = isGenap
+        ? [{wch:15},{wch:30},{wch:28},{wch:50}]
+        : [{wch:15},{wch:30},{wch:50}];
+    let wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Catatan');
+    XLSX.writeFile(wb, 'Template_Catatan_Kenaikan_Kelas.xlsx');
+}
+
+function importExcelCatatan() {
+    let file = document.getElementById('excel_catatan').files[0];
+    if (!file) return alert('Pilih file Excel terlebih dahulu!');
+    let r = new FileReader();
+    r.onload = function(e) {
+        let data = new Uint8Array(e.target.result);
+        let wb = XLSX.read(data, {type:'array'});
+        let json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval:''});
+        let updated = 0;
+        json.forEach(row => {
+            let nisn = (row['NISN']||row['nisn']||'').toString().trim();
+            if (!nisn) return;
+            if (!db.absensi[nisn]) db.absensi[nisn] = {sakit:0, izin:0, alfa:0, sikap:'B', catatan:'', naik:true};
+            let catatan = row['Catatan']||row['catatan']||'';
+            db.absensi[nisn].catatan = catatan.toString();
+            // Status kenaikan (jika kolomnya ada)
+            let statusRaw = (row['Status Kenaikan (NAIK/TINGGAL)']||row['Status Kenaikan']||row['status']||'').toString().trim().toUpperCase();
+            if (statusRaw) {
+                db.absensi[nisn].naik = statusRaw.startsWith('NAIK') ? true : (statusRaw.startsWith('TINGGAL') ? false : (db.absensi[nisn].naik !== false));
+            }
+            updated++;
+        });
+        saveData();
+        renderCatatanTab();
+        hitungDanRenderRekap('akademik');
+        showToast(`✅ Import Catatan Berhasil! (${updated} siswa diperbarui)`);
+    };
+    r.readAsArrayBuffer(file);
+}
 
 function importAbsensiExcel() {
     let file = document.getElementById('excel_absensi').files[0];
@@ -2760,7 +2899,7 @@ function generateHTMLRaporSatuSiswa(nisn, jenis, isGenap, kelasNaik, kelasTingga
         let isKelulusan = klsCekG==='3 MTS'||klsCekG==='3 MA'||klsCekG.includes('IX')||klsCekG.includes('XII')||valNaik==='LULUS';
         let tNaik    = isKelulusan ? '<b>LULUS</b>' : `<b>NAIK</b> ke kelas <b>${kelasNaik}</b>`;
         let tTinggal = isKelulusan ? `<b>TIDAK LULUS dan TINGGAL di kelas <b>${kelasTinggal}</b></b>` : `<b>TINGGAL</b> di kelas <b>${kelasTinggal}</b>`;
-        if (tampilkanLulus) { tTinggal = `<span style="text-decoration:line-through;">${tTinggal}</span>`; }
+        if (tampilkanLulus) { tTinggal = `<span class="huruf-merah" style="text-decoration:line-through;">${tTinggal}</span>`; }
         else { tNaik=`<span style="text-decoration:line-through;">${tNaik}</span>`; tTinggal=`<span class="huruf-merah">${tTinggal}</span>`; }
         html += `<div style="width:48%; text-align:left; direction:ltr;" class="latin">
             <div style="border:1px solid #000; padding:4px 6px; font-size:11.5px; box-sizing:border-box;">
