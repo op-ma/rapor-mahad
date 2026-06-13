@@ -781,6 +781,16 @@
                 </div>
                 <hr class="section-divider">
                 <div class="form-group"><label>Kepala Madrasah</label><input type="text" id="id_kepala" dir="rtl" class="arab" placeholder="tulis dalam bahasa arab" oninput="autoSimpanIdentitas()"></div>
+                <div class="form-group" style="margin-top:4px;">
+                    <label style="font-size:12px; color:var(--clr-text-muted);">Upload Tanda Tangan Kepala Madrasah</label>
+                    <div id="ttd-kepala-preview-wrap" style="display:none; margin-bottom:6px; text-align:center; border:1px dashed var(--clr-border); border-radius:var(--radius-sm); padding:4px; background:var(--clr-surface-2); position:relative;">
+                        <img id="ttd-kepala-preview" src="" alt="TTD Kepala" style="max-height:60px; max-width:180px; object-fit:contain;">
+                        <button onclick="hapusTTD('kepala')" title="Hapus TTD" style="position:absolute; top:2px; right:4px; background:none; border:none; color:var(--clr-danger); cursor:pointer; font-size:16px; line-height:1;">×</button>
+                    </div>
+                    <label for="upload-ttd-kepala" class="btn-ttd-upload" style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; padding:5px 12px; font-size:12px; border:1px solid var(--clr-border); border-radius:var(--radius-sm); background:var(--clr-surface-2); color:var(--clr-text-muted); font-family:var(--font-body);">🖼️ Pilih Gambar TTD</label>
+                    <input type="file" id="upload-ttd-kepala" accept="image/*" style="display:none;" onchange="handleUploadTTD(this,'kepala')">
+                    <span style="font-size:11px; color:var(--clr-text-faint); margin-left:6px;">PNG/JPG transparan direkomendasikan</span>
+                </div>
             </div>
             <div class="section-panel panel-accent">
                 <h3>Waktu & Penandatangan</h3>
@@ -810,6 +820,16 @@
                     <div class="form-group" style="margin:0;"><label>Jk Wali Kelas</label>
                         <select id="id_jk_wali" onchange="autoSimpanIdentitas()"><option value="L">Laki-laki (L)</option><option value="P">Perempuan (P)</option></select>
                     </div>
+                </div>
+                <div class="form-group" style="margin-top:8px;">
+                    <label style="font-size:12px; color:var(--clr-text-muted);">Upload Tanda Tangan Wali Kelas</label>
+                    <div id="ttd-wali-preview-wrap" style="display:none; margin-bottom:6px; text-align:center; border:1px dashed var(--clr-border); border-radius:var(--radius-sm); padding:4px; background:var(--clr-surface-2); position:relative;">
+                        <img id="ttd-wali-preview" src="" alt="TTD Wali" style="max-height:60px; max-width:180px; object-fit:contain;">
+                        <button onclick="hapusTTD('wali')" title="Hapus TTD" style="position:absolute; top:2px; right:4px; background:none; border:none; color:var(--clr-danger); cursor:pointer; font-size:16px; line-height:1;">×</button>
+                    </div>
+                    <label for="upload-ttd-wali" class="btn-ttd-upload" style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; padding:5px 12px; font-size:12px; border:1px solid var(--clr-border); border-radius:var(--radius-sm); background:var(--clr-surface-2); color:var(--clr-text-muted); font-family:var(--font-body);">🖼️ Pilih Gambar TTD</label>
+                    <input type="file" id="upload-ttd-wali" accept="image/*" style="display:none;" onchange="handleUploadTTD(this,'wali')">
+                    <span style="font-size:11px; color:var(--clr-text-faint); margin-left:6px;">PNG/JPG transparan direkomendasikan</span>
                 </div>
             </div>
         </div>
@@ -1621,6 +1641,9 @@ function loadIdentitasForm() {
     document.getElementById('id_kepala').value = i.kepala || '';
     document.getElementById('id_wali').value = i.wali || '';
     document.getElementById('id_jk_wali').value = i.jk_wali || 'L';
+    // Restore TTD previews
+    if (i.ttd_kepala) { tampilkanPreviewTTD('kepala', i.ttd_kepala); }
+    if (i.ttd_wali)   { tampilkanPreviewTTD('wali',   i.ttd_wali);   }
     // Restore kelas naik/tinggal if saved
     if (i.kelas_naik) { let el = document.getElementById('c_kelas_naik'); if (el) el.value = i.kelas_naik; }
     if (i.kelas_tinggal) { let el = document.getElementById('c_kelas_tinggal'); if (el) el.value = i.kelas_tinggal; }
@@ -1628,6 +1651,49 @@ function loadIdentitasForm() {
     onSemesterChange();
 }
 // Auto-save identitas tanpa perlu klik tombol Simpan
+// ============================================================
+// TANDA TANGAN (TTD) UPLOAD
+// ============================================================
+function handleUploadTTD(input, pihak) {
+    if (!input.files || !input.files[0]) return;
+    let file = input.files[0];
+    if (!file.type.startsWith('image/')) { showToast('⚠️ Hanya file gambar yang diizinkan!'); return; }
+    let reader = new FileReader();
+    reader.onload = function(e) {
+        let base64 = e.target.result;
+        if (!db.identitas) db.identitas = {};
+        if (pihak === 'kepala') db.identitas.ttd_kepala = base64;
+        else db.identitas.ttd_wali = base64;
+        tampilkanPreviewTTD(pihak, base64);
+        saveData();
+        showToast('✅ Tanda tangan ' + (pihak==='kepala'?'Kepala Madrasah':'Wali Kelas') + ' berhasil disimpan!');
+    };
+    reader.readAsDataURL(file);
+    input.value = ''; // reset input so same file can be re-uploaded
+}
+
+function tampilkanPreviewTTD(pihak, src) {
+    let wrap = document.getElementById('ttd-' + pihak + '-preview-wrap');
+    let img  = document.getElementById('ttd-' + pihak + '-preview');
+    if (wrap && img) {
+        img.src = src;
+        wrap.style.display = 'block';
+    }
+}
+
+function hapusTTD(pihak) {
+    if (!confirm('Hapus tanda tangan ' + (pihak==='kepala'?'Kepala Madrasah':'Wali Kelas') + '?')) return;
+    if (!db.identitas) db.identitas = {};
+    if (pihak === 'kepala') db.identitas.ttd_kepala = '';
+    else db.identitas.ttd_wali = '';
+    let wrap = document.getElementById('ttd-' + pihak + '-preview-wrap');
+    let img  = document.getElementById('ttd-' + pihak + '-preview');
+    if (wrap) wrap.style.display = 'none';
+    if (img)  img.src = '';
+    saveData();
+    showToast('🗑️ Tanda tangan ' + (pihak==='kepala'?'Kepala Madrasah':'Wali Kelas') + ' dihapus.');
+}
+
 function autoSimpanIdentitas() {
     simpanIdentitas();
     // Refresh preview rapor jika ada siswa yang sudah dipilih
@@ -1652,7 +1718,9 @@ function simpanIdentitas() {
         wali: document.getElementById('id_wali').value,
         jk_wali: document.getElementById('id_jk_wali').value,
         kelas_naik: elNaik ? elNaik.value : '',
-        kelas_tinggal: elTinggal ? elTinggal.value : ''
+        kelas_tinggal: elTinggal ? elTinggal.value : '',
+        ttd_kepala: db.identitas.ttd_kepala || '',
+        ttd_wali: db.identitas.ttd_wali || ''
     };
     saveData(); showToast('✅ Identitas berhasil disimpan!');
 }
@@ -3230,6 +3298,14 @@ function generateHTMLRaporSatuSiswa(nisn, jenis, isGenap, kelasNaik, kelasTingga
     html += `</div>`;
     let namaKepala = idt.kepala||'';
     let namaWali   = idt.wali||'';
+    let ttdKepala  = idt.ttd_kepala||'';
+    let ttdWali    = idt.ttd_wali||'';
+    let ttdKepalaHTML = ttdKepala
+        ? `<div class="ttd-box" style="display:flex;align-items:flex-end;justify-content:center;"><img src="${ttdKepala}" style="max-height:55px;max-width:130px;object-fit:contain;"></div>`
+        : `<div class="ttd-box">&nbsp;</div>`;
+    let ttdWaliHTML = ttdWali
+        ? `<div class="ttd-box" style="display:flex;align-items:flex-end;justify-content:center;"><img src="${ttdWali}" style="max-height:55px;max-width:130px;object-fit:contain;"></div>`
+        : `<div class="ttd-box">&nbsp;</div>`;
     let labelWali  = idt.jk_wali==='P' ? 'ولية الفصل،' : 'ولي الفصل،';
     let labelWaliSiswa = siswa.jk==='P' ? 'ولي الطالبة' : 'ولي الطالب';
     let labelKepsek = `بمعرفة مدير المرحلة ${idt.tingkat_arab||'الثانوية'}`;
@@ -3237,11 +3313,11 @@ function generateHTMLRaporSatuSiswa(nisn, jenis, isGenap, kelasNaik, kelasTingga
         html += `<div style="margin-top:10px; padding-bottom:10px;">
             <table style="width:100%; border:none; text-align:center; font-size:14px; direction:rtl; table-layout:fixed;"><tr>`;
         if (jenis==='akademik') {
-            html += `<td style="width:33%; vertical-align:bottom;"><div class="arab">${labelWali}</div><div class="ttd-box">&nbsp;</div><div class="arab" style="font-size:15px; font-weight:bold;">${namaWali}</div></td>
+            html += `<td style="width:33%; vertical-align:bottom;"><div class="arab">${labelWali}</div>${ttdWaliHTML}<div class="arab" style="font-size:15px; font-weight:bold;">${namaWali}</div></td>
                 <td style="width:34%; vertical-align:bottom;"><div class="arab">${labelWaliSiswa}</div><div class="ttd-box">&nbsp;</div><div class="arab" style="font-size:15px;">.............................</div></td>
-                <td style="width:33%; vertical-align:bottom;"><div class="arab">${labelKepsek}</div><div class="ttd-box">&nbsp;</div><div class="arab" style="font-size:15px; font-weight:bold;">${namaKepala}</div></td>`;
+                <td style="width:33%; vertical-align:bottom;"><div class="arab">${labelKepsek}</div>${ttdKepalaHTML}<div class="arab" style="font-size:15px; font-weight:bold;">${namaKepala}</div></td>`;
         } else {
-            html += `<td style="width:33%; vertical-align:bottom;"><div class="arab">${labelWali}</div><div class="ttd-box">&nbsp;</div><div class="arab" style="font-size:15px; font-weight:bold;">${namaWali}</div></td>
+            html += `<td style="width:33%; vertical-align:bottom;"><div class="arab">${labelWali}</div>${ttdWaliHTML}<div class="arab" style="font-size:15px; font-weight:bold;">${namaWali}</div></td>
                 <td style="width:34%;"></td>
                 <td style="width:33%; vertical-align:bottom;"><div class="arab">${labelWaliSiswa}</div><div class="ttd-box">&nbsp;</div><div class="arab" style="font-size:15px;">.............................</div></td>`;
         }
