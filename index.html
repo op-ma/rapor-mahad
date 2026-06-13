@@ -938,6 +938,7 @@
             <div class="tab-switcher no-print" style="margin-bottom:0;">
                 <button class="active-btn" id="btn-tab-akademik" onclick="switchRekap('akademik')">Rekap Akademik</button>
                 <button id="btn-tab-praktik" onclick="switchRekap('praktik')">Rekap Praktik</button>
+                <button id="btn-tab-analisa" onclick="switchRekap('analisa')">📊 Analisa</button>
             </div>
         </div>
         <div id="area-akademik" style="display:block;">
@@ -959,6 +960,10 @@
             <div style="display:flex; justify-content:space-between; align-items:center; margin:10px 0;" class="no-print">
                 <input type="text" id="cari_siswa_akademik" placeholder="🔍 Cari Nama / NISN Siswa..." oninput="filterSiswa('akademik')" style="padding:6px 12px; border:1.5px solid var(--clr-border); border-radius:var(--radius-sm); width:260px; font-size:12px; font-family:var(--font-body); outline:none;">
                 <button class="btn-danger" onclick="hapusSemuaNilai('akademik')">🗑️ Hapus Semua Nilai Akademik</button>
+            </div>
+            <div class="info-tip no-print" style="margin-bottom:8px; font-size:12px;">
+                ⌨️ <b>Tab</b> = pindah ke kolom samping, <b>Enter</b> = pindah ke baris bawah (seperti Excel). &nbsp;|&nbsp;
+                🏆 Kolom <b>Rank</b> bisa diedit manual jika ada nilai/rata-rata yang sama atau ada kebijakan ranking lain — kotak akan ditandai <span style="background:#fff6e0; padding:0 4px; border-radius:3px;">kuning</span>. Kosongkan lalu Enter untuk kembali ke ranking otomatis.
             </div>
             <div class="table-responsive table-responsive-frozen">
                 <table class="data-table"><thead id="th_akademik"></thead><tbody id="tb_akademik"></tbody></table>
@@ -986,6 +991,44 @@
             </div>
             <div class="table-responsive table-responsive-frozen">
                 <table class="data-table"><thead id="th_praktik"></thead><tbody id="tb_praktik"></tbody></table>
+            </div>
+        </div>
+
+        <div id="area-analisa" style="display:none;">
+            <div class="info-tip no-print" style="margin-bottom:14px;">📊 Analisa dihitung otomatis dari data <b>Rekap Akademik</b> (KKM = 65).</div>
+            <div id="analisa-empty" class="info-tip" style="display:none; background:var(--clr-danger-light); border-color:#e8c6c3; color:var(--clr-danger);">ℹ️ Belum ada data siswa/nilai untuk dianalisis. Silakan pilih kelas dan input nilai akademik terlebih dahulu.</div>
+            <div id="analisa-content">
+                <div class="section-panel panel-primary" style="margin-bottom:16px;">
+                    <h3>🏆 1. Ranking 10 Besar (Total, Rata-rata, Predikat)</h3>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead><tr><th>Rank</th><th>NISN</th><th>Nama</th><th>Jumlah</th><th>Rata-rata</th><th>Predikat</th></tr></thead>
+                            <tbody id="tb_analisa_top10"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="section-panel panel-accent" style="margin-bottom:16px;">
+                    <h3>⚠️ 2. Siswa Predikat راسب (Tidak Lulus)</h3>
+                    <p style="font-size:12px; color:var(--clr-text-muted); margin-bottom:10px;">Daftar siswa dengan predikat راسب beserta mata pelajaran yang nilainya merah (di bawah KKM 65).</p>
+                    <div id="analisa_rasib_container"></div>
+                </div>
+
+                <div class="section-panel" style="margin-bottom:16px;">
+                    <h3>🔴 3. Siswa dengan Nilai Merah per Mata Pelajaran</h3>
+                    <p style="font-size:12px; color:var(--clr-text-muted); margin-bottom:10px;">Daftar siswa yang nilainya di bawah KKM (65), dikelompokkan per mata pelajaran.</p>
+                    <div id="analisa_merah_per_mapel"></div>
+                </div>
+
+                <div class="section-panel" style="margin-bottom:16px;">
+                    <h3>📈 4. Rekap Predikat</h3>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead><tr><th>Predikat</th><th>Jumlah Siswa</th><th>Persentase</th></tr></thead>
+                            <tbody id="tb_analisa_predikat"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -1929,9 +1972,123 @@ function downloadTemplateSiswa() {
 function switchRekap(jenis) {
     document.getElementById('area-akademik').style.display = jenis==='akademik' ? 'block' : 'none';
     document.getElementById('area-praktik').style.display  = jenis==='praktik'  ? 'block' : 'none';
+    document.getElementById('area-analisa').style.display  = jenis==='analisa'  ? 'block' : 'none';
     document.getElementById('btn-tab-akademik').className  = jenis==='akademik' ? 'active-btn' : '';
     document.getElementById('btn-tab-praktik').className   = jenis==='praktik'  ? 'active-btn' : '';
+    document.getElementById('btn-tab-analisa').className   = jenis==='analisa'  ? 'active-btn' : '';
+    if (jenis==='analisa') renderAnalisaTab();
 }
+// ============================================================
+// ANALISA REKAP NILAI AKADEMIK
+// 1. Ranking 10 besar  2. Siswa راسب + mapel merah
+// 3. Siswa nilai merah per mapel  4. Rekap predikat
+// ============================================================
+const KKM_MERAH = 65;
+const PRED_ORDER = ['ممتاز','جيد جدا','جيد','مقبول','راسب'];
+const PRED_LABEL = {
+    'ممتاز':   'Mumtaz (Sangat Baik)',
+    'جيد جدا': 'Jayyid Jiddan (Baik Sekali)',
+    'جيد':     'Jayyid (Baik)',
+    'مقبول':   'Maqbul (Cukup)',
+    'راسب':    'Rasib (Tidak Lulus)'
+};
+
+function renderAnalisaTab() {
+    let emptyEl = document.getElementById('analisa-empty');
+    let contentEl = document.getElementById('analisa-content');
+    if (!db.siswa || db.siswa.length === 0) {
+        emptyEl.style.display = 'block';
+        contentEl.style.display = 'none';
+        return;
+    }
+    emptyEl.style.display = 'none';
+    contentEl.style.display = 'block';
+
+    // Pastikan kalkulasi (total/rata/predikat/rank) terbaru
+    hitungDanRenderRekap('akademik');
+
+    // Susun data per siswa: total, rata, predikat, rank, dan daftar mapel merah
+    let data = db.siswa.map(s => {
+        let v = db.nilai.akademik[s.nisn] || {};
+        let kal = v.kalkulasi || { total:0, rata:'0.00', predikat:'-', rankFull:'-' };
+        let merahList = db.mapel.akademik
+            .filter(m => v[m.id]!==undefined && v[m.id]!=='' && parseFloat(v[m.id]) < KKM_MERAH)
+            .map(m => ({ id:m.id, latin:m.latin, nilai:v[m.id] }));
+        return { nisn:s.nisn, nama:s.nama, total:kal.total, rata:kal.rata, predikat:kal.predikat, rank:kal.rankFull, merahList };
+    });
+    let dataAdaNilai = data.filter(d => parseFloat(d.rata) > 0);
+
+    // ---------- 1. Ranking 10 Besar ----------
+    let top10 = [...dataAdaNilai].sort((a,b) => parseFloat(b.rata)-parseFloat(a.rata)).slice(0, 10);
+    let top10HTML = top10.length ? top10.map((d, i) => `
+        <tr>
+            <td><b>${i+1}</b></td>
+            <td>${d.nisn}</td>
+            <td style="text-align:left; white-space:nowrap;">${d.nama}</td>
+            <td><b>${d.total}</b></td>
+            <td><b>${d.rata}</b></td>
+            <td class="arab" dir="rtl">${d.predikat}</td>
+        </tr>`).join('')
+        : `<tr><td colspan="6" style="text-align:center; color:var(--clr-text-muted);">Belum ada data nilai.</td></tr>`;
+    document.getElementById('tb_analisa_top10').innerHTML = top10HTML;
+
+    // ---------- 2. Siswa راسب + keterangan mapel merah ----------
+    let rasib = data.filter(d => d.predikat === 'راسب');
+    let rasibHTML;
+    if (rasib.length === 0) {
+        rasibHTML = `<div class="info-tip" style="background:var(--clr-success-light); border-color:#b7e4c7; color:var(--clr-success);">✅ Tidak ada siswa dengan predikat راسب.</div>`;
+    } else {
+        rasibHTML = `<div class="table-responsive"><table class="data-table">
+            <thead><tr><th>NISN</th><th>Nama</th><th>Rata-rata</th><th style="text-align:left;">Keterangan Mapel Merah (Nilai &lt; ${KKM_MERAH})</th></tr></thead>
+            <tbody>` + rasib.map(d => {
+                let ket = d.merahList.length > 0
+                    ? d.merahList.map(m => `<span style="display:inline-block; background:var(--clr-danger-light); color:var(--clr-danger); padding:2px 7px; border-radius:4px; margin:2px; font-size:11px; white-space:nowrap;">${m.latin}: ${m.nilai}</span>`).join(' ')
+                    : `<span style="color:var(--clr-text-muted); font-size:12px;">Tidak ada nilai mapel di bawah KKM, namun rata-rata &lt; ${KKM_MERAH}.</span>`;
+                return `<tr>
+                    <td>${d.nisn}</td>
+                    <td style="text-align:left; white-space:nowrap;">${d.nama}</td>
+                    <td><b style="color:var(--clr-danger);">${d.rata}</b></td>
+                    <td style="text-align:left;">${ket}</td>
+                </tr>`;
+            }).join('') + `</tbody></table></div>`;
+    }
+    document.getElementById('analisa_rasib_container').innerHTML = rasibHTML;
+
+    // ---------- 3. Siswa nilai merah per mata pelajaran ----------
+    let perMapelHTML = '';
+    db.mapel.akademik.forEach(m => {
+        let siswaMerah = data.filter(d => d.merahList.find(x => x.id===m.id));
+        if (siswaMerah.length > 0) {
+            perMapelHTML += `<div style="margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid var(--clr-border-soft);">
+                <div style="margin-bottom:4px;"><b>${m.latin}</b> <span style="color:var(--clr-text-muted); font-size:12px;">— ${siswaMerah.length} siswa</span></div>
+                ${siswaMerah.map(d => {
+                    let nilaiMapel = d.merahList.find(x => x.id===m.id).nilai;
+                    return `<span style="display:inline-block; background:var(--clr-danger-light); color:var(--clr-danger); padding:2px 7px; border-radius:4px; margin:2px; font-size:11px; white-space:nowrap;">${d.nama}: ${nilaiMapel}</span>`;
+                }).join(' ')}
+            </div>`;
+        }
+    });
+    if (!perMapelHTML) {
+        perMapelHTML = `<div class="info-tip" style="background:var(--clr-success-light); border-color:#b7e4c7; color:var(--clr-success);">✅ Tidak ada nilai di bawah KKM (${KKM_MERAH}) pada semua mata pelajaran.</div>`;
+    }
+    document.getElementById('analisa_merah_per_mapel').innerHTML = perMapelHTML;
+
+    // ---------- 4. Rekap Predikat ----------
+    let totalSiswa = dataAdaNilai.length || data.length;
+    let predHTML = PRED_ORDER.map(p => {
+        let count = data.filter(d => d.predikat === p).length;
+        let pct = totalSiswa > 0 ? ((count/totalSiswa)*100).toFixed(1) : '0.0';
+        let merahStyle = p==='راسب' ? 'color:var(--clr-danger); font-weight:bold;' : '';
+        return `<tr>
+            <td class="arab" dir="rtl" style="text-align:left; ${merahStyle}"><b>${p}</b> <span class="latin" style="font-size:11px; color:var(--clr-text-muted);">(${PRED_LABEL[p]})</span></td>
+            <td><b>${count}</b></td>
+            <td>${pct}%</td>
+        </tr>`;
+    }).join('');
+    predHTML += `<tr style="background:var(--clr-surface-2); font-weight:700;"><td style="text-align:left;">Total Siswa</td><td>${data.length}</td><td>100%</td></tr>`;
+    document.getElementById('tb_analisa_predikat').innerHTML = predHTML;
+}
+
 function switchMapelSub(jenis) {
     document.getElementById('sub-mapel-akademik').style.display = jenis==='akademik' ? 'block' : 'none';
     document.getElementById('sub-mapel-praktik').style.display  = jenis==='praktik'  ? 'block' : 'none';
@@ -1950,6 +2107,72 @@ function filterSiswa(jenis) {
             row.style.display = (nisn.includes(input) || nama.includes(input)) ? '' : 'none';
         }
     });
+}
+
+// ============================================================
+// NAVIGASI KEYBOARD ALA EXCEL: Tab -> kolom samping, Enter -> baris bawah
+// Posisi (baris/kolom) dihitung dulu, lalu input di-blur (memicu simpan &
+// render ulang tabel), baru kemudian sel tujuan di-focus berdasarkan posisi
+// pada tabel yang baru (karena render ulang mengganti seluruh elemen DOM).
+// ============================================================
+function handleGridKeydown(e, el) {
+    const key = e.key;
+    if (key !== 'Enter' && key !== 'Tab') return;
+    e.preventDefault();
+
+    let tr = el.closest('tr');
+    let tbody = tr.closest('tbody');
+    let tbodyId = tbody.id;
+    let rows = Array.from(tbody.querySelectorAll('tr'));
+    let inputsInRow = Array.from(tr.querySelectorAll('input.input-tabel'));
+    let colIdx = inputsInRow.indexOf(el);
+    let rowIdx = rows.indexOf(tr);
+    let totalCols = inputsInRow.length;
+
+    let targetRowIdx = rowIdx;
+    let targetColIdx = colIdx; // -1 berarti "kolom terakhir" pada baris tujuan
+
+    if (key === 'Enter') {
+        // Enter -> pindah ke bawah, kolom yang sama (Shift+Enter -> ke atas)
+        targetRowIdx = e.shiftKey ? rowIdx - 1 : rowIdx + 1;
+    } else if (key === 'Tab') {
+        if (e.shiftKey) {
+            // Shift+Tab -> kolom kiri, wrap ke baris atas (kolom terakhir)
+            if (colIdx - 1 >= 0) {
+                targetColIdx = colIdx - 1;
+            } else {
+                targetRowIdx = rowIdx - 1;
+                targetColIdx = -1;
+            }
+        } else {
+            // Tab -> kolom kanan, wrap ke baris bawah (kolom pertama)
+            if (colIdx + 1 < totalCols) {
+                targetColIdx = colIdx + 1;
+            } else {
+                targetRowIdx = rowIdx + 1;
+                targetColIdx = 0;
+            }
+        }
+    }
+
+    // Picu simpan & render ulang lebih dulu (onchange terjadi saat blur)
+    el.blur();
+
+    // Tunggu 1 tick agar render ulang tabel selesai, lalu fokus sel tujuan
+    setTimeout(() => {
+        let freshTbody = document.getElementById(tbodyId);
+        if (!freshTbody) return;
+        let freshRows = Array.from(freshTbody.querySelectorAll('tr'));
+        if (targetRowIdx < 0 || targetRowIdx >= freshRows.length) return;
+        let freshInputs = Array.from(freshRows[targetRowIdx].querySelectorAll('input.input-tabel'));
+        if (freshInputs.length === 0) return;
+        let idx = targetColIdx === -1 ? freshInputs.length - 1 : Math.min(targetColIdx, freshInputs.length - 1);
+        let target = freshInputs[idx];
+        if (target) {
+            target.focus();
+            if (target.select) target.select();
+        }
+    }, 0);
 }
 
 // ============================================================
@@ -2029,6 +2252,24 @@ function updateNilaiLangsung(nisn, mapelId, jenis, el) {
     el.style.color = (val!=='' && parseFloat(val)<65) ? 'red' : 'inherit';
     
     // Update total & rata2 realtime
+    hitungDanRenderRekap(jenis);
+}
+
+// ============================================================
+// RANKING MANUAL: override rank per siswa (untuk nilai sama/kebijakan lain)
+// ============================================================
+function updateRankManual(nisn, jenis, el) {
+    if (!db.nilai[jenis][nisn]) db.nilai[jenis][nisn] = {};
+    let val = el.value.trim();
+    if (val === '') {
+        // Kosongkan -> kembali ke ranking otomatis
+        delete db.nilai[jenis][nisn].rankManual;
+        showToast('↺ Rank dikembalikan ke otomatis.');
+    } else {
+        db.nilai[jenis][nisn].rankManual = val;
+        showToast(`✏️ Rank diubah manual menjadi "${val}".`);
+    }
+    saveData();
     hitungDanRenderRekap(jenis);
 }
 function updateAbsensiLangsung(nisn, key, el) {
@@ -2190,7 +2431,7 @@ function hitungDanRenderRekap(jenis) {
     if (jenis==='akademik') {
         thHTML = `<tr><th style="width:108px;max-width:108px;">NISN</th><th style="min-width:210px;max-width:210px;">Nama</th>`;
         db.mapel.akademik.forEach(m => thHTML += `<th class="rekap-th-vertical">${m.latin}</th>`);
-        thHTML += `<th style="min-width:40px; max-width:40px;">Total</th><th style="min-width:36px; max-width:36px;">Rata</th><th style="min-width:46px; max-width:46px;">Predikat</th><th style="min-width:28px; max-width:28px;">Rank</th></tr>`;
+        thHTML += `<th style="min-width:40px; max-width:40px;">Total</th><th style="min-width:42px; max-width:42px;">Rata</th><th style="min-width:46px; max-width:46px;">Predikat</th><th style="min-width:34px; max-width:34px;">Rank</th></tr>`;
     } else {
         // Build two-row header: row 1 = kategori (Arab + Latin), row 2 = sub-mapel
         let thRow1 = `<tr><th rowspan="2" style="width:108px;max-width:108px;">NISN</th><th rowspan="2" style="min-width:210px;max-width:210px;">Nama</th>`;
@@ -2231,7 +2472,7 @@ function hitungDanRenderRekap(jenis) {
         });
         let filled = vals.filter(x => x!==null);
         let total  = filled.reduce((a,b) => a+b, 0);
-        let rata   = filled.length>0 ? Math.round(total/filled.length) : 0;
+        let rata   = filled.length>0 ? (total/filled.length).toFixed(2) : '0.00';
         // === LOGIKA PREDIKAT ===
         // Predikat راسب jika salah satu kondisi terpenuhi:
         //   1. Nilai Al-Qur'an (ak_01) < 65
@@ -2253,12 +2494,15 @@ function hitungDanRenderRekap(jenis) {
         return { ...s, vals, total: Math.round(total), rata, pred, alfa: a.alfa||0, naik: a.naik!==false, orderedMapels };
     });
 
-    // Ranking
+    // Ranking (otomatis berdasarkan rata-rata, dengan opsi override manual per siswa)
     let ranked = [...mappedData].filter(d => parseFloat(d.rata)>0).sort((a,b) => parseFloat(b.rata)-parseFloat(a.rata));
     mappedData.forEach(d => {
         let myRank = ranked.findIndex(x => x.nisn===d.nisn)+1;
         if (!db.nilai[jenis][d.nisn]) db.nilai[jenis][d.nisn] = {};
-        db.nilai[jenis][d.nisn].kalkulasi = { rankFull: myRank||'-', total: d.total, rata: d.rata, predikat: d.pred };
+        let rankAuto = myRank || '-';
+        let rankManual = db.nilai[jenis][d.nisn].rankManual;
+        let rankFull = (rankManual !== undefined && rankManual !== '' && rankManual !== null) ? rankManual : rankAuto;
+        db.nilai[jenis][d.nisn].kalkulasi = { rankFull, rankAuto, total: d.total, rata: d.rata, predikat: d.pred };
     });
 
     let trHTML = '';
@@ -2272,14 +2516,26 @@ function hitungDanRenderRekap(jenis) {
             trHTML += `<td style="padding:1px; min-width:30px; text-align:center;"><input type="text" 
                 inputmode="decimal" pattern="[0-9.]+" maxlength="5" class="input-tabel" value="${curV}" style="${cMerah}; width:30px;" 
                 oninput="this.value=this.value.replace(/[^0-9.]/g,''); this.style.color=(this.value && parseFloat(this.value)<65)?'red':'inherit';"
-                onchange="updateNilaiLangsung('${d.nisn}','${m.id}','${jenis}',this)"></td>`;
+                onchange="updateNilaiLangsung('${d.nisn}','${m.id}','${jenis}',this)"
+                onkeydown="handleGridKeydown(event,this)"></td>`;
         });
         let cPred = d.pred==='راسب' ? 'color:red;font-weight:bold;' : 'color:var(--clr-success);font-weight:bold;';
         if (jenis==='akademik') {
+            let kal = db.nilai[jenis][d.nisn].kalkulasi;
+            let isManual = kal.rankFull !== kal.rankAuto;
+            let rankBg = isManual ? 'background:#fff6e0;' : '';
+            let rankTitle = isManual
+                ? `Rank manual (otomatis: ${kal.rankAuto}). Kosongkan lalu Enter untuk kembali ke otomatis.`
+                : `Rank otomatis berdasarkan rata-rata. Bisa diedit jika ada nilai sama / kebijakan lain.`;
             trHTML += `<td class="latin" style="white-space:nowrap; padding:2px; max-width:40px;"><b>${d.total}</b></td>
-                <td class="latin" style="white-space:nowrap; padding:2px; max-width:36px;"><b>${d.rata}</b></td>
+                <td class="latin" style="white-space:nowrap; padding:2px; max-width:42px;"><b>${d.rata}</b></td>
                 <td class="arab" dir="rtl" style="${cPred} white-space:nowrap; padding:4px;">${d.pred}</td>
-                <td class="latin" style="white-space:nowrap; padding:4px;"><b>${db.nilai[jenis][d.nisn].kalkulasi.rankFull}</b></td>`;
+                <td class="latin" style="white-space:nowrap; padding:1px; max-width:34px; ${rankBg}" title="${rankTitle}">
+                    <input type="text" inputmode="numeric" maxlength="4" class="input-tabel" style="width:30px; font-weight:700; ${rankBg}" 
+                        value="${kal.rankFull}"
+                        onchange="updateRankManual('${d.nisn}','${jenis}',this)"
+                        onkeydown="handleGridKeydown(event,this)">
+                </td>`;
         }
         trHTML += `</tr>`;
     });
@@ -2312,13 +2568,16 @@ function renderAbsensiTab() {
             <td style="text-align:left; white-space:normal; word-break:break-word; min-width:210px; max-width:210px;">${s.nama}</td>
             <td style="padding:1px; min-width:30px; text-align:center;"><input type="text" inputmode="numeric" pattern="[0-9\\-]*" maxlength="2" class="input-tabel" value="${abs.sakit!==undefined && abs.sakit!==null && abs.sakit!=='' ? abs.sakit : 0}" style="width:30px;"
                 oninput="this.value=this.value.replace(/[^0-9\\-]/g,'');"
-                onchange="updateAbsensiLangsung('${s.nisn}','sakit',this); renderAbsensiTab()"></td>
+                onchange="updateAbsensiLangsung('${s.nisn}','sakit',this); renderAbsensiTab()"
+                onkeydown="handleGridKeydown(event,this)"></td>
             <td style="padding:1px; min-width:30px; text-align:center;"><input type="text" inputmode="numeric" pattern="[0-9\\-]*" maxlength="2" class="input-tabel" value="${abs.izin!==undefined && abs.izin!==null && abs.izin!=='' ? abs.izin : 0}" style="width:30px;"
                 oninput="this.value=this.value.replace(/[^0-9\\-]/g,'');"
-                onchange="updateAbsensiLangsung('${s.nisn}','izin',this); renderAbsensiTab()"></td>
+                onchange="updateAbsensiLangsung('${s.nisn}','izin',this); renderAbsensiTab()"
+                onkeydown="handleGridKeydown(event,this)"></td>
             <td style="padding:1px; min-width:30px; text-align:center;"><input type="text" inputmode="numeric" pattern="[0-9\\-]*" maxlength="2" class="input-tabel" value="${abs.alfa!==undefined && abs.alfa!==null && abs.alfa!=='' ? abs.alfa : 0}" style="width:30px;"
                 oninput="this.value=this.value.replace(/[^0-9\\-]/g,'');"
-                onchange="updateAbsensiLangsung('${s.nisn}','alfa',this); renderAbsensiTab()"></td>
+                onchange="updateAbsensiLangsung('${s.nisn}','alfa',this); renderAbsensiTab()"
+                onkeydown="handleGridKeydown(event,this)"></td>
             <td style="padding:2px;">
                 <select style="width:80px; padding:4px; font-size:11px; border:1px solid var(--clr-border); border-radius:4px;"
                     onchange="updateAbsensiLangsung('${s.nisn}','sikap',this); renderAbsensiTab()">
