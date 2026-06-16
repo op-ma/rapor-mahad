@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rapor-pwa-v8';
+const CACHE_NAME = 'rapor-pwa-v9';
 const urlsToCache = [
   './',
   './index.html',
