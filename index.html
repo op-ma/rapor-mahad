@@ -3074,8 +3074,16 @@ function setModeCetak(mode) {
 function cetakLayarOtomatis() {
     let nisn = document.getElementById('c_pilih_siswa').value;
     let jenis = document.getElementById('c_jenis_rapor').value;
-    let jenisTeks = jenis==='akademik' ? 'RAPOR AKADEMIK' : 'RAPOR PRAKTIK';
-    let fileName = nisn ? (jenisTeks+' '+(db.siswa.find(s=>s.nisn===nisn)||{nama:''}).nama) : jenisTeks+' SEMUA SISWA';
+    let jenisTeks = jenis==='akademik' ? 'Rapor Akademik' : 'Rapor Praktik';
+    let semLatin = (db.identitas && db.identitas.semester_latin) || '';
+    let smtLabel = (semLatin.includes('Genap') || semLatin.includes('II')) ? 'SMT2' : 'SMT1';
+    let fileName;
+    if (nisn) {
+        let siswa = db.siswa.find(s=>s.nisn===nisn) || {nama:''};
+        fileName = jenisTeks + '-' + nisn + '-' + siswa.nama + '-' + smtLabel;
+    } else {
+        fileName = jenisTeks + '-SEMUA SISWA-' + smtLabel;
+    }
     let origTitle = document.title;
     document.title = fileName.replace(/[/\\?%*:|"<>]/g,'');
     window.print();
@@ -3084,8 +3092,16 @@ function cetakLayarOtomatis() {
 function simpanPDF() {
     let nisn = document.getElementById('c_pilih_siswa').value;
     let jenis = document.getElementById('c_jenis_rapor').value;
-    let jenisTeks = jenis==='akademik' ? 'RAPOR AKADEMIK' : 'RAPOR PRAKTIK';
-    let fileName = nisn ? (jenisTeks+' '+(db.siswa.find(s=>s.nisn===nisn)||{nama:''}).nama) : jenisTeks+' SEMUA SISWA';
+    let jenisTeks = jenis==='akademik' ? 'Rapor Akademik' : 'Rapor Praktik';
+    let semLatin = (db.identitas && db.identitas.semester_latin) || '';
+    let smtLabel = (semLatin.includes('Genap') || semLatin.includes('II')) ? 'SMT2' : 'SMT1';
+    let fileName;
+    if (nisn) {
+        let siswa = db.siswa.find(s=>s.nisn===nisn) || {nama:''};
+        fileName = jenisTeks + '-' + nisn + '-' + siswa.nama + '-' + smtLabel;
+    } else {
+        fileName = jenisTeks + '-SEMUA SISWA-' + smtLabel;
+    }
     let origTitle = document.title;
     document.title = fileName.replace(/[/\\?%*:|"<>]/g,'');
     showToast('💡 Pilih "Save as PDF" di jendela cetak yang muncul.', 5000);
