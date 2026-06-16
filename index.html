@@ -883,7 +883,7 @@
                         </div>
                         <div class="sub-card">
                             <p class="text-small text-muted">Import Sub-Mapel (Header Excel: <b>Latin, Arab</b>)</p>
-                            <button class="btn-excel" style="font-size:12px; padding:7px 10px; margin-bottom:8px;" onclick="downloadTemplateMapel()">📥 Download Template Sub-Mapel</button>
+                            <button class="btn-excel" style="font-size:12px; padding:7px 10px; margin-bottom:8px;" onclick="downloadTemplateMapelPraktik()">📥 Download Template Sub-Mapel</button>
                             <input type="file" id="excel_mapel_praktik" accept=".xlsx, .xls" />
                             <button class="btn-action" style="padding:5px 10px; font-size:12px; margin-top:4px;" onclick="importExcelMapel('praktik')">📥 Import</button>
                         </div>
@@ -1902,7 +1902,17 @@ function importExcelMapel(jenis) {
             if (latin) {
                 let obj = { id:'M'+Date.now()+Math.random(), latin, arab: (row['Arab']||row['arab']||'').toString().trim() };
                 if (jenis === 'praktik') {
-                    obj.kategori = document.getElementById('m_pr_kategori').value || 'pilihan';
+                    // Cari kategori berdasarkan kolom "Mapel Induk" (cocokkan latin kategori)
+                    let indukStr = (row['Mapel Induk']||row['mapel_induk']||row['Kategori']||row['kategori']||'').toString().trim();
+                    if (indukStr) {
+                        let katMatch = db.kategori_praktik.find(k =>
+                            k.latin.toLowerCase() === indukStr.toLowerCase() ||
+                            k.arab === indukStr
+                        );
+                        obj.kategori = katMatch ? katMatch.id : (document.getElementById('m_pr_kategori').value || 'pilihan');
+                    } else {
+                        obj.kategori = document.getElementById('m_pr_kategori').value || 'pilihan';
+                    }
                 }
                 db.mapel[jenis].push(obj);
             }
@@ -1916,6 +1926,32 @@ function downloadTemplateMapel() {
     let wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Template_Mapel');
     XLSX.writeFile(wb, 'Template_Import_Mapel.xlsx');
+}
+function downloadTemplateMapelPraktik() {
+    // Baris header
+    let rows = [['Mapel Induk', 'Latin', 'Arab']];
+    // Isi contoh baris dari kategori yang sudah ada di db
+    if (db.kategori_praktik && db.kategori_praktik.length > 0) {
+        db.kategori_praktik.forEach(kat => {
+            // Ambil sub-mapel yang sudah ada di kategori ini sebagai contoh
+            let existing = db.mapel.praktik.filter(m => m.kategori === kat.id);
+            if (existing.length > 0) {
+                existing.forEach(m => rows.push([kat.latin, m.latin, m.arab]));
+            } else {
+                rows.push([kat.latin, 'Contoh Sub-Mapel', '']);
+            }
+        });
+    } else {
+        // Fallback jika belum ada kategori
+        rows.push(['Ekstrakurikuler Wajib', 'Contoh Sub-Mapel', 'مثال']);
+        rows.push(['Ekstrakurikuler / Pilihan', 'Contoh Sub-Mapel 2', 'مثال ٢']);
+    }
+    let ws = XLSX.utils.aoa_to_sheet(rows);
+    // Lebar kolom
+    ws['!cols'] = [{wch:30},{wch:30},{wch:30}];
+    let wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Template_SubMapel_Praktik');
+    XLSX.writeFile(wb, 'Template_Import_SubMapel_Praktik.xlsx');
 }
 
 // ============================================================
@@ -3285,7 +3321,7 @@ function generateHTMLRaporSatuSiswa(nisn, jenis, isGenap, kelasNaik, kelasTingga
                 <table style="border:none; margin:0 0 5px 0; direction:rtl; text-align:right; font-size:12.5px; float:right;">
                     <tr><td class="arab" style="border:none; padding:0 0 2px 5px;">سلم الكشف في</td>
                         <td style="border:none; padding:0 5px 2px 5px;">:</td>
-                        <td style="border:none; padding:0 0 2px 0; text-align:right;"><div class="latin" dir="ltr" style="display:inline-block;">${idt.tempat||''}</div></td></tr>
+                        <td style="border:none; padding:0 0 2px 0; text-align:right;"><div class="arab" style="display:inline-block;">${idt.tempat||''}</div></td></tr>
                     <tr><td class="arab" style="border:none; padding:0 0 0 5px; vertical-align:top;">التاريخ</td>
                         <td style="border:none; padding:0 5px 0 5px; vertical-align:top;">:</td>
                         <td style="border:none; padding:0; text-align:right;">
