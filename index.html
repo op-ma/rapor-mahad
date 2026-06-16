@@ -3074,15 +3074,16 @@ function setModeCetak(mode) {
 function cetakLayarOtomatis() {
     let nisn = document.getElementById('c_pilih_siswa').value;
     let jenis = document.getElementById('c_jenis_rapor').value;
-    let jenisTeks = jenis==='akademik' ? 'Rapor Akademik' : 'Rapor Praktik';
+    let prefix = jenis==='akademik' ? 'RA' : 'RP';
     let semLatin = (db.identitas && db.identitas.semester_latin) || '';
-    let smtLabel = (semLatin.includes('Genap') || semLatin.includes('II')) ? 'SMT2' : 'SMT1';
+    let noSmt = (semLatin.includes('Genap') || semLatin.includes('II')) ? '2' : '1';
+    let namaKelas = (db.kelasAktif && db.kelasAktif.kelas) ? db.kelasAktif.kelas : (db.identitas.kelas_latin || '');
     let fileName;
     if (nisn) {
         let siswa = db.siswa.find(s=>s.nisn===nisn) || {nama:''};
-        fileName = jenisTeks + '-' + nisn + '-' + siswa.nama + '-' + smtLabel;
+        fileName = prefix + noSmt + '-' + namaKelas + '-' + nisn + '-' + siswa.nama;
     } else {
-        fileName = jenisTeks + '-SEMUA SISWA-' + smtLabel;
+        fileName = prefix + noSmt + '-' + namaKelas + '-SEMUA SISWA';
     }
     let origTitle = document.title;
     document.title = fileName.replace(/[/\\?%*:|"<>]/g,'');
@@ -3092,15 +3093,16 @@ function cetakLayarOtomatis() {
 function simpanPDF() {
     let nisn = document.getElementById('c_pilih_siswa').value;
     let jenis = document.getElementById('c_jenis_rapor').value;
-    let jenisTeks = jenis==='akademik' ? 'Rapor Akademik' : 'Rapor Praktik';
+    let prefix = jenis==='akademik' ? 'RA' : 'RP';
     let semLatin = (db.identitas && db.identitas.semester_latin) || '';
-    let smtLabel = (semLatin.includes('Genap') || semLatin.includes('II')) ? 'SMT2' : 'SMT1';
+    let noSmt = (semLatin.includes('Genap') || semLatin.includes('II')) ? '2' : '1';
+    let namaKelas = (db.kelasAktif && db.kelasAktif.kelas) ? db.kelasAktif.kelas : (db.identitas.kelas_latin || '');
     let fileName;
     if (nisn) {
         let siswa = db.siswa.find(s=>s.nisn===nisn) || {nama:''};
-        fileName = jenisTeks + '-' + nisn + '-' + siswa.nama + '-' + smtLabel;
+        fileName = prefix + noSmt + '-' + namaKelas + '-' + nisn + '-' + siswa.nama;
     } else {
-        fileName = jenisTeks + '-SEMUA SISWA-' + smtLabel;
+        fileName = prefix + noSmt + '-' + namaKelas + '-SEMUA SISWA';
     }
     let origTitle = document.title;
     document.title = fileName.replace(/[/\\?%*:|"<>]/g,'');
@@ -3136,7 +3138,10 @@ function generateHTMLRaporSatuSiswa(nisn, jenis, isGenap, kelasNaik, kelasTingga
         db.kategori_praktik.forEach(kat => {
             let items = db.mapel.praktik.filter(m => m.kategori===kat.id);
             if (items.length>0) {
-                items.forEach((m, idx) => {
+                // Filter hanya sub-mapel yang ada nilainya untuk siswa ini
+                let itemsAdaNilai = items.filter(m => n[m.id]!==undefined && n[m.id]!=='');
+                if (itemsAdaNilai.length===0) return; // Skip kategori ini jika semua sub-mapel kosong
+                itemsAdaNilai.forEach((m, idx) => {
                     let val = n[m.id]!==undefined && n[m.id]!=='' ? n[m.id] : '-';
                     let huruf = val!=='-' ? terbilangArab(val) : '-';
                     let isMerah = val!=='-' && parseFloat(val)<65;
@@ -3144,8 +3149,8 @@ function generateHTMLRaporSatuSiswa(nisn, jenis, isGenap, kelasNaik, kelasTingga
                     let valCell = isMerah ? val : `<b>${val}</b>`;
                     barisTabel += '<tr>';
                     if (idx===0) {
-                        barisTabel += `<td rowspan="${items.length}" class="arab" style="text-align:center; vertical-align:middle; font-size:15px;">${toArabicNum(groupNo)}</td>
-                        <td rowspan="${items.length}" style="text-align:center; vertical-align:middle; padding:3px; max-width:80px;">
+                        barisTabel += `<td rowspan="${itemsAdaNilai.length}" class="arab" style="text-align:center; vertical-align:middle; font-size:15px;">${toArabicNum(groupNo)}</td>
+                        <td rowspan="${itemsAdaNilai.length}" style="text-align:center; vertical-align:middle; padding:3px; max-width:80px;">
                             <div class="arab" style="font-size:15px; font-weight:bold; white-space:normal; word-break:break-word;">${kat.arab}</div>
                             <div class="latin" style="font-size:11px; margin-top:2px; white-space:normal; word-break:break-word;">${kat.latin}</div>
                         </td>`; groupNo++;
