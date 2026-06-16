@@ -3179,7 +3179,7 @@ function generateHTMLRaporSatuSiswa(nisn, jenis, isGenap, kelasNaik, kelasTingga
     let tapelArab = toArabicNum(tapelRaw).replace(/H/ig,'هـ').replace(/M/ig,'م');
     let klsCek = (idt.kelas||'').toUpperCase();
     let isKelas3 = klsCek.includes('3') || klsCek.includes('III') || klsCek.includes('IX') || klsCek.includes('XII') || klsCek.includes('الثالث');
-    let judulArab = jenis==='praktik' ? (isKelas3?'كشف درجات الامتحان العملي':'كشف الدرجات الإضافية') : 'كشف الدرجات';
+    let judulArab = jenis==='praktik' ? (isKelas3?'كشف درجات الامتحان العملي':'كشف الدرجات للدروس الإضافية') : 'كشف الدرجات';
     let judulLatinHTML = '';
     if (jenis==='akademik') {
         judulLatinHTML = `<h2 class="latin" style="font-size:16px;">Laporan Hasil Belajar Santri Madrasah ${idt.madrasah||'-'}</h2>`;
